@@ -1,12 +1,13 @@
 #include "file.h"
 #include <pthread.h>
+#include <stddef.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
 
 typedef struct {
-  char *str;
+  void *payload;
 } Message;
 
 typedef struct {
@@ -16,16 +17,17 @@ typedef struct {
 
 typedef void (*BehaviourFunction)(struct Actor *, Letter *);
 
-#define MAILBOX_MAX_CAPACITY 5
+#define MAILBOX_MAX_CAPACITY 100
 typedef struct Actor {
   Letter **mailbox;
   volatile int mailbox_capacity;
   int mailbox_begin_index;
   pthread_mutex_t mailbox_mutex;
   BehaviourFunction behaviour_function;
+  void *memory;
 } Actor;
 
-#define THREADPOOL_MAX_SIZE 2
+#define THREADPOOL_MAX_SIZE 8
 typedef struct {
   pthread_t threads[THREADPOOL_MAX_SIZE];
 } Threadpool;
@@ -45,6 +47,28 @@ typedef struct {
   ActorUniverse *actor_universe;
 } ThreadpoolArgs;
 
+// #define LOGGING
+#ifdef LOGGING
+/* variadic macro that forwards everything after the prefix to printf.
+   Use do{...}while(0) so it behaves like a statement in all contexts. */
+#define log(...)                                                               \
+  do {                                                                         \
+    printf("LOGGING: " __VA_ARGS__);                                           \
+  } while (0)
+#else
+/* compile-time disabled: no code, no argument evaluation */
+#define log(...) ((void)0)
+#endif
+
+#define LOG_WARNING
+#ifdef LOG_WARNING
+#define warning(...)                                                           \
+  do {                                                                         \
+    printf("WARNING: " __VA_ARGS__);                                           \
+  } while (0)
+#else
+#define warning(...) ((void)0)
+#endif
 void process_actor(Actor *actor);
 
 ActorUniverse *make_actor_universe() {
@@ -125,12 +149,11 @@ void *threadpool_thread_function(void *void_args) {
       Actor *actor = args->actor_universe->actor_queue[available_actor_index];
       pthread_mutex_unlock(&args->actor_universe->actor_queue_mutex);
 
-      printf("thread: %d unlocked 1\n", args->thread_index);
-
       // We have reserved the rights to an actor, now process the message that
       // it had received
       process_actor(actor);
-      printf("thread: %d processed\n", args->thread_index);
+      log("thread: %d processed actor: %d\n", args->thread_index,
+          available_actor_index);
       actor_universe_liberate_available_actor(args->actor_universe,
                                               available_actor_index);
     } else {
@@ -140,6 +163,7 @@ void *threadpool_thread_function(void *void_args) {
 
     // usleep(1000 * 100);
   }
+  free(args);
   pthread_exit(NULL);
 }
 
@@ -169,17 +193,11 @@ void stop_threadpool(Threadpool *threadpool) {
   }
 }
 
-void free_threadpool(Threadpool *threadpool) {
-  for (int thread_index = 0; thread_index < THREADPOOL_MAX_SIZE;
-       thread_index++) {
-    pthread_cancel(threadpool->threads[thread_index]);
-  }
-  free(threadpool);
-}
+void free_threadpool(Threadpool *threadpool) { free(threadpool); }
 
-Message *make_message(char *str) {
+Message *make_message(void *payload) {
   Message *message = malloc(sizeof(Message));
-  message->str = strdup(str);
+  message->payload = payload;
   return message;
 }
 
@@ -197,25 +215,28 @@ void free_letter(Letter *letter) {
   free(letter);
 }
 
-Actor *make_actor(BehaviourFunction behaviour_function) {
+Actor *make_actor(BehaviourFunction behaviour_function,
+                  size_t actor_memory_size) {
   Actor *actor = malloc(sizeof(Actor));
   actor->behaviour_function = behaviour_function;
   actor->mailbox = calloc(MAILBOX_MAX_CAPACITY, sizeof(Letter *));
   actor->mailbox_capacity = 0;
   actor->mailbox_begin_index = 0;
   pthread_mutex_init(&actor->mailbox_mutex, NULL);
+  actor->memory = malloc(actor_memory_size);
   return actor;
 }
 
 Actor *spawn_actor(ActorUniverse *actor_universe,
-                   BehaviourFunction behaviour_function) {
+                   BehaviourFunction behaviour_function,
+                   size_t actor_memory_size) {
   pthread_mutex_lock(&actor_universe->actor_queue_mutex);
   if (actor_universe->actor_queue_current_capacity >=
       actor_universe->actor_queue_max_capacity) {
     actor_universe_double_size(actor_universe);
   }
 
-  Actor *actor = make_actor(behaviour_function);
+  Actor *actor = make_actor(behaviour_function, actor_memory_size);
 
   actor_universe->actor_queue[actor_universe->actor_queue_current_capacity++] =
       actor;
@@ -224,7 +245,12 @@ Actor *spawn_actor(ActorUniverse *actor_universe,
   return actor;
 }
 
-void free_actor(Actor *actor) { free(actor); }
+void free_actor(Actor *actor) {
+  free(actor->mailbox);
+  free(actor->memory);
+  pthread_mutex_destroy(&actor->mailbox_mutex);
+  free(actor);
+}
 
 void process_actor(Actor *actor) {
   // lock your mailbox to read the letter
@@ -244,10 +270,6 @@ void process_actor(Actor *actor) {
   free_letter(letter);
 }
 
-void my_actor(Actor *self, Letter *letter) {
-  printf("%s\n", letter->message->str);
-}
-
 void sync_send(Actor *sender, Actor *receiver, Message *message) {
   // Letter *letter = make_letter(self, message);
   // receiver->behaviour_function(self, letter);
@@ -262,35 +284,105 @@ void async_send(Actor *sender, Actor *receiver, Message *message) {
     int letter_index =
         (receiver->mailbox_begin_index + receiver->mailbox_capacity) %
         MAILBOX_MAX_CAPACITY;
-    printf("INFO: put letter '%s' at index: %d\n", message->str, letter_index);
+    log("put letter '%s' in a mailbox at index: %d\n", (char *)message->payload,
+        letter_index);
     receiver->mailbox[letter_index] = make_letter(sender, message);
     receiver->mailbox_capacity++;
   } else {
-    printf("WARNING: a message '%s' has been dropped!\n", message->str);
+    warning("WARNING: a message '%s' has been dropped!\n",
+            (char *)message->payload);
   }
 
   pthread_mutex_unlock(&receiver->mailbox_mutex);
 }
 
+void my_actor(Actor *self, Letter *letter) {
+  printf("%s\n", (char *)letter->message->payload);
+}
+
+typedef enum { Ping, Pong, Init } PingPongEnum;
+
+typedef struct {
+  PingPongEnum type;
+  Actor *ref;
+  int i;
+} PingPongMessage;
+
+typedef struct {
+  Actor *ref;
+} PingPongMemory;
+
+void ping_pong_actor(Actor *self, Letter *letter) {
+  PingPongMessage *message = letter->message->payload;
+  PingPongMemory *ping_pong_memory = self->memory;
+
+  PingPongMessage *msg;
+  switch (message->type) {
+  case Init:
+    printf("Init\n");
+    ping_pong_memory->ref = message->ref;
+    break;
+  case Ping:
+    printf("Ping %d\n", message->i);
+    msg = malloc(sizeof(PingPongMessage));
+    msg->type = Pong;
+    msg->i = message->i + 1;
+    async_send(self, ping_pong_memory->ref, make_message(msg));
+    break;
+  case Pong:
+    printf("Pong %d\n", message->i);
+    msg = malloc(sizeof(PingPongMessage));
+    msg->type = Ping;
+    msg->i = message->i + 1;
+    async_send(self, ping_pong_memory->ref, make_message(msg));
+    break;
+  }
+  free(message);
+}
+
 int main(int argc, char *argv[]) {
   ActorUniverse *actor_universe = make_actor_universe();
   Threadpool *threadpool = make_threadpool(actor_universe);
-  Actor *actor = spawn_actor(actor_universe, &my_actor);
-  for (int i = 0; i < 100; i++) {
-    char buffer[64];
-    snprintf(buffer, sizeof(buffer), "Hello World! %d", i);
-    Message *message = make_message(buffer);
-    async_send(NULL, actor, message);
-    usleep(10000);
-  }
+
+  Actor *ping_actor =
+      spawn_actor(actor_universe, &ping_pong_actor, sizeof(PingPongMemory));
+  Actor *pong_actor =
+      spawn_actor(actor_universe, &ping_pong_actor, sizeof(PingPongMemory));
+
+  PingPongMessage *ping_init_message = malloc(sizeof(PingPongMessage));
+  ping_init_message->type = Init;
+  ping_init_message->ref = pong_actor;
+  PingPongMessage *pong_init_message = malloc(sizeof(PingPongMessage));
+  pong_init_message->type = Init;
+  pong_init_message->ref = ping_actor;
+
+  async_send(NULL, ping_actor, make_message(ping_init_message));
+  async_send(NULL, pong_actor, make_message(pong_init_message));
+
+  PingPongMessage *ping_message = malloc(sizeof(PingPongMessage));
+  ping_message->type = Ping;
+  ping_message->i = 0;
+  async_send(NULL, ping_actor, make_message(ping_message));
+
+  // Actor *actor = spawn_actor(actor_universe, &my_actor);
+  // for (int i = 0; i < 100; i++) {
+  //   char buffer[64];
+  //   snprintf(buffer, sizeof(buffer), "Hello World! %d", i);
+  //   char *copy = strdup(buffer);
+  //   Message *message = make_message(copy);
+  //   async_send(NULL, actor, message);
+  //   // usleep(1000);
+  // }
 
   sleep(1);
-  printf("%d\n", actor_universe->actor_queue_current_capacity);
+  log("there are currently %d actors in the actor universe\n",
+      actor_universe->actor_queue_current_capacity);
 
   stop_threadpool(threadpool);
-  printf("Threadpool stopped\n");
+  log("Threadpool stopped\n");
 
-  free_actor(actor);
+  free_actor(ping_actor);
+  free_actor(pong_actor);
   free_threadpool(threadpool);
   free_actor_universe(actor_universe);
   return 0;
