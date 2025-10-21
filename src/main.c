@@ -2,6 +2,7 @@
 #include <pthread.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <unistd.h>
 
 typedef struct {
@@ -112,17 +113,10 @@ volatile int g_threadpool_continue = 1;
 void *threadpool_thread_function(void *void_args) {
   ThreadpoolArgs *args = (ThreadpoolArgs *)void_args;
   while (g_threadpool_continue) {
-    printf("thread: %d wait\n", args->thread_index);
-
     pthread_mutex_lock(&args->actor_universe->actor_queue_mutex);
-
-    printf("thread: %d locked\n", args->thread_index);
 
     int available_actor_index =
         actor_universe_get_available_actor(args->actor_universe);
-
-    printf("thread: %d available_actor_index: %d\n", args->thread_index,
-           available_actor_index);
 
     if (available_actor_index >= 0) {
       // There is an available actor, so reserve it
@@ -137,13 +131,14 @@ void *threadpool_thread_function(void *void_args) {
       // it had received
       process_actor(actor);
       printf("thread: %d processed\n", args->thread_index);
+      actor_universe_liberate_available_actor(args->actor_universe,
+                                              available_actor_index);
     } else {
       // No available, so unlock and give a chance to another thread
       pthread_mutex_unlock(&args->actor_universe->actor_queue_mutex);
-      printf("thread: %d unlocked 2\n", args->thread_index);
     }
 
-    usleep(1000 * 100);
+    // usleep(1000 * 100);
   }
   pthread_exit(NULL);
 }
@@ -184,7 +179,7 @@ void free_threadpool(Threadpool *threadpool) {
 
 Message *make_message(char *str) {
   Message *message = malloc(sizeof(Message));
-  message->str = str;
+  message->str = strdup(str);
   return message;
 }
 
@@ -235,8 +230,10 @@ void process_actor(Actor *actor) {
   // lock your mailbox to read the letter
   pthread_mutex_lock(&actor->mailbox_mutex);
 
-  Letter *letter = actor->mailbox[actor->mailbox_begin_index++];
+  Letter *letter = actor->mailbox[actor->mailbox_begin_index];
   actor->mailbox_capacity--;
+  actor->mailbox_begin_index =
+      (actor->mailbox_begin_index + 1) % MAILBOX_MAX_CAPACITY;
 
   pthread_mutex_unlock(&actor->mailbox_mutex);
 
@@ -263,11 +260,13 @@ void async_send(Actor *sender, Actor *receiver, Message *message) {
 
   if (receiver->mailbox_capacity < MAILBOX_MAX_CAPACITY) {
     int letter_index =
-        (receiver->mailbox_begin_index + receiver->mailbox_capacity++) %
+        (receiver->mailbox_begin_index + receiver->mailbox_capacity) %
         MAILBOX_MAX_CAPACITY;
+    printf("INFO: put letter '%s' at index: %d\n", message->str, letter_index);
     receiver->mailbox[letter_index] = make_letter(sender, message);
+    receiver->mailbox_capacity++;
   } else {
-    printf("WARNING: a message has been dropped!\n");
+    printf("WARNING: a message '%s' has been dropped!\n", message->str);
   }
 
   pthread_mutex_unlock(&receiver->mailbox_mutex);
@@ -277,10 +276,15 @@ int main(int argc, char *argv[]) {
   ActorUniverse *actor_universe = make_actor_universe();
   Threadpool *threadpool = make_threadpool(actor_universe);
   Actor *actor = spawn_actor(actor_universe, &my_actor);
-  Message *message = make_message("Hello World!");
-  async_send(NULL, actor, message);
+  for (int i = 0; i < 100; i++) {
+    char buffer[64];
+    snprintf(buffer, sizeof(buffer), "Hello World! %d", i);
+    Message *message = make_message(buffer);
+    async_send(NULL, actor, message);
+    usleep(10000);
+  }
 
-  sleep(3);
+  sleep(1);
   printf("%d\n", actor_universe->actor_queue_current_capacity);
 
   stop_threadpool(threadpool);
