@@ -27,7 +27,7 @@ typedef struct Actor {
   void *memory;
 } Actor;
 
-#define THREADPOOL_MAX_SIZE 8
+#define THREADPOOL_MAX_SIZE 2
 typedef struct {
   pthread_t threads[THREADPOOL_MAX_SIZE];
 } Threadpool;
@@ -312,6 +312,9 @@ typedef struct {
   Actor *ref;
 } PingPongMemory;
 
+#define ROUNDS 10000000
+struct timespec start_time, stop_time;
+
 void ping_pong_actor(Actor *self, Letter *letter) {
   PingPongMessage *message = letter->message->payload;
   PingPongMemory *ping_pong_memory = self->memory;
@@ -323,17 +326,27 @@ void ping_pong_actor(Actor *self, Letter *letter) {
     ping_pong_memory->ref = message->ref;
     break;
   case Ping:
-    printf("Ping %d\n", message->i);
-    msg = malloc(sizeof(PingPongMessage));
-    msg->type = Pong;
-    msg->i = message->i + 1;
-    async_send(self, ping_pong_memory->ref, make_message(msg));
+    if (message->i <= 0) {
+      clock_gettime(CLOCK_MONOTONIC, &stop_time);
+      long sec = stop_time.tv_sec - start_time.tv_sec;
+      long nsec = stop_time.tv_nsec - start_time.tv_nsec;
+      double elapsed_s = sec + nsec / 1e9;
+      double rps = (double)ROUNDS / elapsed_s;
+      printf("Ping-pong: %d rounds in %.6f s -> %.0f messages per second\n",
+             ROUNDS, elapsed_s, rps);
+    } else {
+      // printf("Ping %d\n", message->i);
+      msg = malloc(sizeof(PingPongMessage));
+      msg->type = Pong;
+      msg->i = message->i - 1;
+      async_send(self, ping_pong_memory->ref, make_message(msg));
+    }
     break;
   case Pong:
-    printf("Pong %d\n", message->i);
+    // printf("Pong %d\n", message->i);
     msg = malloc(sizeof(PingPongMessage));
     msg->type = Ping;
-    msg->i = message->i + 1;
+    msg->i = message->i - 1;
     async_send(self, ping_pong_memory->ref, make_message(msg));
     break;
   }
@@ -361,7 +374,9 @@ int main(int argc, char *argv[]) {
 
   PingPongMessage *ping_message = malloc(sizeof(PingPongMessage));
   ping_message->type = Ping;
-  ping_message->i = 0;
+  ping_message->i = ROUNDS;
+
+  clock_gettime(CLOCK_MONOTONIC, &start_time);
   async_send(NULL, ping_actor, make_message(ping_message));
 
   // Actor *actor = spawn_actor(actor_universe, &my_actor);
@@ -374,7 +389,7 @@ int main(int argc, char *argv[]) {
   //   // usleep(1000);
   // }
 
-  sleep(1);
+  sleep(3);
   log("there are currently %d actors in the actor universe\n",
       actor_universe->actor_queue_current_capacity);
 
