@@ -5,7 +5,8 @@ TESTS=$(wildcard $(TEST)/*.c)
 TESTSBINS=$(patsubst $(TEST)/%.c, $(TEST)/bin/%, $(TESTS))
 
 CC := gcc
-CFLAGS := -Wall -O3
+# CFLAGS := -Wall -O3
+CFLAGS := -Wall
 LFLAGS :=
 ZIPNAME := project.zip
 BIN := bin
