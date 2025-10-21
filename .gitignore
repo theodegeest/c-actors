@@ -94,3 +94,4 @@ dkms.conf
 *.out
 *.app
 
+bin
