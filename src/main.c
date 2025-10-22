@@ -1,7 +1,3 @@
-#include <pthread.h>
-#include <stddef.h>
-#include <unistd.h>
-
 #include "actor_universe.h"
 #include "log.h"
 #include "threadpool.h"
