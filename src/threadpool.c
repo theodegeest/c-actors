@@ -1,6 +1,7 @@
 #include "threadpool.h"
 #include "actor.h"
 #include "log.h"
+#include <stdlib.h>
 
 volatile int g_threadpool_continue = 1;
 
@@ -37,11 +38,13 @@ void *threadpool_thread_function(void *void_args) {
   pthread_exit(NULL);
 }
 
-Threadpool *make_threadpool(ActorUniverse *actor_universe) {
+Threadpool *make_threadpool(ActorUniverse *actor_universe,
+                            int number_of_threads) {
   Threadpool *threadpool = malloc(sizeof(Threadpool));
+  threadpool->threads = calloc(number_of_threads, sizeof(pthread_t));
+  threadpool->number_of_threads = number_of_threads;
 
-  for (int thread_index = 0; thread_index < THREADPOOL_MAX_SIZE;
-       thread_index++) {
+  for (int thread_index = 0; thread_index < number_of_threads; thread_index++) {
 
     ThreadpoolArgs *args = malloc(sizeof(ThreadpoolArgs));
     args->thread_index = thread_index;
@@ -56,11 +59,14 @@ Threadpool *make_threadpool(ActorUniverse *actor_universe) {
 
 void stop_threadpool(Threadpool *threadpool) {
   g_threadpool_continue = 0;
-  for (int thread_index = 0; thread_index < THREADPOOL_MAX_SIZE;
+  for (int thread_index = 0; thread_index < threadpool->number_of_threads;
        thread_index++) {
     void *ret;
     pthread_join(threadpool->threads[thread_index], &ret);
   }
 }
 
-void free_threadpool(Threadpool *threadpool) { free(threadpool); }
+void free_threadpool(Threadpool *threadpool) {
+  free(threadpool->threads);
+  free(threadpool);
+}

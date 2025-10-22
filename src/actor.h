@@ -8,7 +8,7 @@
 
 typedef void (*BehaviourFunction)(struct Actor *, Letter *);
 
-#define MAILBOX_MAX_CAPACITY 100
+#define MAILBOX_MAX_CAPACITY 10000
 typedef struct Actor {
   Letter **mailbox;
   volatile int mailbox_capacity;

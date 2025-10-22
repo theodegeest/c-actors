@@ -3,9 +3,9 @@
 
 #include "actor_universe.h"
 
-#define THREADPOOL_MAX_SIZE 2
 typedef struct {
-  pthread_t threads[THREADPOOL_MAX_SIZE];
+  pthread_t *threads;
+  int number_of_threads;
 } Threadpool;
 
 typedef struct {
@@ -15,7 +15,7 @@ typedef struct {
 
 void *threadpool_thread_function(void *void_args);
 
-Threadpool *make_threadpool(ActorUniverse *actor_universe);
+Threadpool *make_threadpool(ActorUniverse *actor_universe, int number_of_threads);
 
 void stop_threadpool(Threadpool *threadpool);
 

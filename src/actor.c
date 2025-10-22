@@ -1,6 +1,8 @@
 #include "actor.h"
 #include "log.h"
 
+#define PROCESSING_GRANULARITY 1000
+
 Actor *make_actor(BehaviourFunction behaviour_function,
                   size_t actor_memory_size) {
   Actor *actor = malloc(sizeof(Actor));
@@ -38,7 +40,7 @@ void free_actor(Actor *actor) {
   free(actor);
 }
 
-void process_actor(Actor *actor) {
+static void process_one_letter_of_actor(Actor *actor) {
   // lock your mailbox to read the letter
   pthread_mutex_lock(&actor->mailbox_mutex);
 
@@ -54,6 +56,15 @@ void process_actor(Actor *actor) {
 
   actor->behaviour_function(actor, letter);
   free_letter(letter);
+}
+
+void process_actor(Actor *actor) {
+  for (int i = 0; i < PROCESSING_GRANULARITY; i++) {
+    if (actor->mailbox_capacity <= 0) {
+      break;
+    }
+    process_one_letter_of_actor(actor);
+  }
 }
 
 void sync_send(Actor *sender, Actor *receiver, Message *message) {

@@ -10,21 +10,26 @@ typedef struct {
   ChainEnum type;
   Actor *next;
   int i;
+  int chain_length;
 } ChainMessage;
 
 typedef struct {
   Actor *next;
+  int rounds;
+  int chain_length;
 } ChainMemory;
 
-#define ROUNDS 10
 static struct timespec start_time, stop_time;
 
 void chain_end_actor(Actor *self, Letter *letter) {
   ChainMessage *message = letter->message->payload;
+  ChainMemory *chain_memory = self->memory;
 
   switch (message->type) {
   case Init:
     printf("Init end\n");
+    chain_memory->rounds = message->i;
+    chain_memory->chain_length = message->chain_length;
     clock_gettime(CLOCK_MONOTONIC, &start_time);
     break;
   case Next:
@@ -33,9 +38,9 @@ void chain_end_actor(Actor *self, Letter *letter) {
       long sec = stop_time.tv_sec - start_time.tv_sec;
       long nsec = stop_time.tv_nsec - start_time.tv_nsec;
       double elapsed_s = sec + nsec / 1e9;
-      double rps = (double)ROUNDS / elapsed_s;
-      printf("Chain: %d rounds in %.6f s -> %.0f messages per second\n", ROUNDS,
-             elapsed_s, rps);
+      double rps = (double)chain_memory->rounds / elapsed_s;
+      printf("Chain: %d rounds in %.6f s -> %.0f messages per second\n", chain_memory->rounds,
+             elapsed_s, rps * chain_memory->chain_length);
     }
     break;
   }
@@ -53,7 +58,7 @@ void chain_actor(Actor *self, Letter *letter) {
     chain_memory->next = message->next;
     break;
   case Next:
-    log("Next %d\n", message->i);
+    info("Next %d\n", message->i);
     msg = malloc(sizeof(ChainMessage));
     msg->type = Next;
     msg->i = message->i;
@@ -63,7 +68,7 @@ void chain_actor(Actor *self, Letter *letter) {
   free(message);
 }
 
-void bench_chain(ActorUniverse *actor_universe, int chain_length) {
+void bench_chain(ActorUniverse *actor_universe, int chain_length, int rounds) {
   Actor *chain_actors[chain_length];
   chain_actors[chain_length - 1] =
       spawn_actor(actor_universe, &chain_end_actor, sizeof(ChainMemory));
@@ -78,9 +83,11 @@ void bench_chain(ActorUniverse *actor_universe, int chain_length) {
 
   ChainMessage *end_init_message = malloc(sizeof(ChainMessage));
   end_init_message->type = Init;
+  end_init_message->i = rounds;
+  end_init_message->chain_length = chain_length;
   async_send(NULL, chain_actors[chain_length - 1], make_message(end_init_message));
 
-  for (int message_index = ROUNDS; message_index >= 0; message_index--) {
+  for (int message_index = rounds; message_index >= 0; message_index--) {
     ChainMessage *chain_message = malloc(sizeof(ChainMessage));
     chain_message->type = Next;
     chain_message->i = message_index;

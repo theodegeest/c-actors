@@ -20,10 +20,10 @@ void my_actor(Actor *self, Letter *letter) {
 
 int main(int argc, char *argv[]) {
   ActorUniverse *actor_universe = make_actor_universe();
-  Threadpool *threadpool = make_threadpool(actor_universe);
+  Threadpool *threadpool = make_threadpool(actor_universe, 1);
 
   // bench_ping_pong(actor_universe);
-  bench_chain(actor_universe, 5);
+  bench_chain(actor_universe, 50, 5000);
 
   // Actor *actor = spawn_actor(actor_universe, &my_actor);
   // for (int i = 0; i < 100; i++) {
@@ -35,7 +35,7 @@ int main(int argc, char *argv[]) {
   //   // usleep(1000);
   // }
 
-  sleep(3);
+  sleep(6);
   log("there are currently %d actors in the actor universe\n",
       actor_universe->actor_queue_current_capacity);
 
