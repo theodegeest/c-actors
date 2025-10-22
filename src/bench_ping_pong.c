@@ -60,7 +60,7 @@ void ping_pong_actor(Actor *self, Letter *letter) {
 }
 
 void bench_ping_pong(ActorUniverse *actor_universe, int rounds) {
-  if (sem_init(&done, 0, 0) != 0) { 
+  if (sem_init(&done, 0, 0) != 0) {
     perror("sem_init");
     return;
   }

@@ -81,7 +81,7 @@ void chain_actor(Actor *self, Letter *letter) {
 
 void bench_chain(ActorUniverse *actor_universe, int chain_length, int rounds) {
 
-  if (sem_init(&done, 0, 0) != 0) { 
+  if (sem_init(&done, 0, 0) != 0) {
     perror("sem_init");
     return;
   }

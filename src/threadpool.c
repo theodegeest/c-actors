@@ -34,8 +34,6 @@ void *threadpool_thread_function(void *void_args) {
       // No available, so unlock and give a chance to another thread
       pthread_mutex_unlock(&args->actor_universe->actor_queue_mutex);
     }
-
-    // usleep(1000 * 100);
   }
   free(args);
   pthread_exit(NULL);

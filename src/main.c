@@ -1,22 +1,13 @@
 #include <pthread.h>
 #include <stddef.h>
-#include <stdio.h>
-#include <stdlib.h>
 #include <unistd.h>
 
-#include "actor.h"
 #include "actor_universe.h"
-#include "letter.h"
 #include "log.h"
-#include "message.h"
 #include "threadpool.h"
 
-#include "bench_ping_pong.h"
 #include "bench_chain.h"
-
-void my_actor(Actor *self, Letter *letter) {
-  printf("%s\n", (char *)letter->message->payload);
-}
+#include "bench_ping_pong.h"
 
 int main(int argc, char *argv[]) {
   ActorUniverse *actor_universe = make_actor_universe();
@@ -25,17 +16,6 @@ int main(int argc, char *argv[]) {
   // bench_ping_pong(actor_universe, 500000);
   bench_chain(actor_universe, 500, 5000);
 
-  // Actor *actor = spawn_actor(actor_universe, &my_actor);
-  // for (int i = 0; i < 100; i++) {
-  //   char buffer[64];
-  //   snprintf(buffer, sizeof(buffer), "Hello World! %d", i);
-  //   char *copy = strdup(buffer);
-  //   Message *message = make_message(copy);
-  //   async_send(NULL, actor, message);
-  //   // usleep(1000);
-  // }
-
-  // sleep(6);
   log("there are currently %d actors in the actor universe\n",
       actor_universe->actor_queue_current_capacity);
 

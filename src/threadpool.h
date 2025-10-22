@@ -15,7 +15,8 @@ typedef struct {
 
 void *threadpool_thread_function(void *void_args);
 
-Threadpool *make_threadpool(ActorUniverse *actor_universe, int number_of_threads);
+Threadpool *make_threadpool(ActorUniverse *actor_universe,
+                            int number_of_threads);
 
 void stop_threadpool(Threadpool *threadpool);
 

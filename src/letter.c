@@ -12,4 +12,3 @@ void free_letter(Letter *letter) {
   free_message(letter->message);
   free(letter);
 }
-
