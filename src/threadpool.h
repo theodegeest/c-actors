@@ -15,11 +15,11 @@ typedef struct {
 
 void *threadpool_thread_function(void *void_args);
 
-Threadpool *make_threadpool(ActorUniverse *actor_universe,
+Threadpool *threadpool_make(ActorUniverse *actor_universe,
                             int number_of_threads);
 
-void stop_threadpool(Threadpool *threadpool);
+void threadpool_stop(Threadpool *threadpool);
 
-void free_threadpool(Threadpool *threadpool);
+void threadpool_free(Threadpool *threadpool);
 
 #endif // !THREADPOOL_H_

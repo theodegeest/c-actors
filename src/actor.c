@@ -5,7 +5,7 @@
 
 #define PROCESSING_GRANULARITY 100
 
-Actor *make_actor(BehaviourFunction behaviour_function,
+Actor *actor_make(BehaviourFunction behaviour_function,
                   size_t actor_memory_size) {
   Actor *actor = malloc(sizeof(Actor));
   actor->behaviour_function = behaviour_function;
@@ -18,7 +18,7 @@ Actor *make_actor(BehaviourFunction behaviour_function,
   return actor;
 }
 
-Actor *spawn_actor(ActorUniverse *actor_universe,
+Actor *actor_spawn(ActorUniverse *actor_universe,
                    BehaviourFunction behaviour_function,
                    size_t actor_memory_size) {
   pthread_mutex_lock(&actor_universe->actor_queue_mutex);
@@ -27,7 +27,7 @@ Actor *spawn_actor(ActorUniverse *actor_universe,
     actor_universe_double_size(actor_universe);
   }
 
-  Actor *actor = make_actor(behaviour_function, actor_memory_size);
+  Actor *actor = actor_make(behaviour_function, actor_memory_size);
 
   actor_universe
       ->actor_reservations[actor_universe->actor_queue_current_capacity] = 0;
@@ -38,14 +38,14 @@ Actor *spawn_actor(ActorUniverse *actor_universe,
   return actor;
 }
 
-void free_actor(Actor *actor) {
+void actor_free(Actor *actor) {
   free(actor->mailbox);
   free(actor->memory);
   pthread_mutex_destroy(&actor->mailbox_mutex);
   free(actor);
 }
 
-static void process_one_letter_of_actor(Actor *actor) {
+static void actor_process_one_letter(Actor *actor) {
   // lock your mailbox to read the letter
   pthread_mutex_lock(&actor->mailbox_mutex);
 
@@ -66,15 +66,15 @@ static void process_one_letter_of_actor(Actor *actor) {
   // allowed to put letters in our mailbox
 
   actor->behaviour_function(actor, letter_p);
-  free_letter(letter_p);
+  letter_free(letter_p);
 }
 
-void process_actor(Actor *actor) {
+void actor_process(Actor *actor) {
   for (int i = 0; i < PROCESSING_GRANULARITY; i++) {
     if (actor->mailbox_current_capacity <= 0) {
       break;
     }
-    process_one_letter_of_actor(actor);
+    actor_process_one_letter(actor);
   }
 }
 
@@ -122,7 +122,7 @@ void async_send(Actor *sender, Actor *receiver, Message *message) {
   // LOG("put letter '%s' in a mailbox at index: %d\n", (char
   // *)message->payload,
   //     letter_index);
-  receiver->mailbox[letter_index] = make_letter(sender, message);
+  receiver->mailbox[letter_index] = letter_make(sender, message);
   receiver->mailbox_current_capacity++;
 
   pthread_mutex_unlock(&receiver->mailbox_mutex);

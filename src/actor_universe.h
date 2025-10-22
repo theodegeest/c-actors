@@ -15,9 +15,9 @@ typedef struct {
   pthread_mutex_t actor_queue_mutex;
 } ActorUniverse;
 
-ActorUniverse *make_actor_universe();
+ActorUniverse *actor_universe_make();
 
-void free_actor_universe(ActorUniverse *actor_universe);
+void actor_universe_free(ActorUniverse *actor_universe);
 
 void actor_universe_double_size(ActorUniverse *actor_universe);
 

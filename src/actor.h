@@ -19,16 +19,16 @@ typedef struct Actor {
   void *memory;
 } Actor;
 
-Actor *make_actor(BehaviourFunction behaviour_function,
+Actor *actor_make(BehaviourFunction behaviour_function,
                   size_t actor_memory_size);
 
-Actor *spawn_actor(ActorUniverse *actor_universe,
+Actor *actor_spawn(ActorUniverse *actor_universe,
                    BehaviourFunction behaviour_function,
                    size_t actor_memory_size);
 
-void free_actor(Actor *actor);
+void actor_free(Actor *actor);
 
-void process_actor(Actor *actor);
+void actor_process(Actor *actor);
 
 void sync_send(Actor *sender, Actor *receiver, Message *message);
 

@@ -45,7 +45,7 @@ void ping_pong_actor(Actor *self, Letter *letter) {
       msg = malloc(sizeof(PingPongMessage));
       msg->type = Pong;
       msg->i = message->i - 1;
-      async_send(self, ping_pong_memory->ref, make_message(msg));
+      async_send(self, ping_pong_memory->ref, message_make(msg));
     }
     break;
   case Pong:
@@ -53,7 +53,7 @@ void ping_pong_actor(Actor *self, Letter *letter) {
     msg = malloc(sizeof(PingPongMessage));
     msg->type = Ping;
     msg->i = message->i - 1;
-    async_send(self, ping_pong_memory->ref, make_message(msg));
+    async_send(self, ping_pong_memory->ref, message_make(msg));
     break;
   }
   free(message);
@@ -66,9 +66,9 @@ void bench_ping_pong(ActorUniverse *actor_universe, int rounds) {
   }
 
   Actor *ping_actor =
-      spawn_actor(actor_universe, &ping_pong_actor, sizeof(PingPongMemory));
+      actor_spawn(actor_universe, &ping_pong_actor, sizeof(PingPongMemory));
   Actor *pong_actor =
-      spawn_actor(actor_universe, &ping_pong_actor, sizeof(PingPongMemory));
+      actor_spawn(actor_universe, &ping_pong_actor, sizeof(PingPongMemory));
 
   PingPongMessage *ping_init_message = malloc(sizeof(PingPongMessage));
   ping_init_message->type = Init;
@@ -80,15 +80,15 @@ void bench_ping_pong(ActorUniverse *actor_universe, int rounds) {
   pong_init_message->ref = ping_actor;
   ping_init_message->i = rounds;
 
-  async_send(NULL, ping_actor, make_message(ping_init_message));
-  async_send(NULL, pong_actor, make_message(pong_init_message));
+  async_send(NULL, ping_actor, message_make(ping_init_message));
+  async_send(NULL, pong_actor, message_make(pong_init_message));
 
   PingPongMessage *ping_message = malloc(sizeof(PingPongMessage));
   ping_message->type = Ping;
   ping_message->i = rounds;
 
   clock_gettime(CLOCK_MONOTONIC, &start_time);
-  async_send(NULL, ping_actor, make_message(ping_message));
+  async_send(NULL, ping_actor, message_make(ping_message));
 
   sem_wait(&done);
   sem_destroy(&done);

@@ -73,7 +73,7 @@ void chain_actor(Actor *self, Letter *letter) {
       local += (double)10000000 / (i + 1);
     }
     sink += local;
-    async_send(self, chain_memory->next, make_message(msg));
+    async_send(self, chain_memory->next, message_make(msg));
     break;
   }
   free(message);
@@ -88,14 +88,14 @@ void bench_chain(ActorUniverse *actor_universe, int chain_length, int rounds) {
 
   Actor *chain_actors[chain_length];
   chain_actors[chain_length - 1] =
-      spawn_actor(actor_universe, &chain_end_actor, sizeof(ChainMemory));
+      actor_spawn(actor_universe, &chain_end_actor, sizeof(ChainMemory));
   for (int i = chain_length - 2; i >= 0; i--) {
     chain_actors[i] =
-        spawn_actor(actor_universe, &chain_actor, sizeof(ChainMemory));
+        actor_spawn(actor_universe, &chain_actor, sizeof(ChainMemory));
     ChainMessage *init_message = malloc(sizeof(ChainMessage));
     init_message->type = Init;
     init_message->next = chain_actors[i + 1];
-    async_send(NULL, chain_actors[i], make_message(init_message));
+    async_send(NULL, chain_actors[i], message_make(init_message));
   }
 
   ChainMessage *end_init_message = malloc(sizeof(ChainMessage));
@@ -103,13 +103,13 @@ void bench_chain(ActorUniverse *actor_universe, int chain_length, int rounds) {
   end_init_message->i = rounds;
   end_init_message->chain_length = chain_length;
   async_send(NULL, chain_actors[chain_length - 1],
-             make_message(end_init_message));
+             message_make(end_init_message));
 
   for (int message_index = rounds; message_index >= 0; message_index--) {
     ChainMessage *chain_message = malloc(sizeof(ChainMessage));
     chain_message->type = Next;
     chain_message->i = message_index;
-    async_send(NULL, chain_actors[0], make_message(chain_message));
+    async_send(NULL, chain_actors[0], message_make(chain_message));
   }
   // sleep(5);
 

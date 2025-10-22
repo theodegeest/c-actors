@@ -8,7 +8,7 @@ typedef struct {
   Message *message;
 } Letter;
 
-Letter *make_letter(struct Actor *sender, Message *message);
-void free_letter(Letter *letter);
+Letter *letter_make(struct Actor *sender, Message *message);
+void letter_free(Letter *letter);
 
 #endif // !LETTER_H_

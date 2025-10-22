@@ -5,7 +5,7 @@ typedef struct {
   void *payload;
 } Message;
 
-Message *make_message(void *payload);
-void free_message(Message *message);
+Message *message_make(void *payload);
+void message_free(Message *message);
 
 #endif // MESSAGE_H_

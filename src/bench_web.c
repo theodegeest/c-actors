@@ -29,7 +29,7 @@ typedef struct {
 static struct timespec start_time, stop_time;
 static sem_t done;
 
-int total_number_of_messages(int web_size, int rounds) {
+static int total_number_of_messages(int web_size, int rounds) {
   int count = 1;
   for (int r = 0; r <= rounds; r++) {
     count += pow(web_size, r + 1);
@@ -37,7 +37,7 @@ int total_number_of_messages(int web_size, int rounds) {
   return count;
 }
 
-int total_number_of_done(int web_size, int rounds) {
+static int total_number_of_done(int web_size, int rounds) {
   return pow(web_size, rounds + 1);
 }
 
@@ -67,7 +67,7 @@ void leader_actor(Actor *self, Letter *letter) {
       msg = malloc(sizeof(WebMessage));
       msg->type = Next;
       msg->i = message->i;
-      async_send(self, web_memory->refs[i], make_message(msg));
+      async_send(self, web_memory->refs[i], message_make(msg));
     }
     break;
   case Done:
@@ -122,12 +122,12 @@ void web_actor(Actor *self, Letter *letter) {
         msg = malloc(sizeof(WebMessage));
         msg->type = Next;
         msg->i = message->i - 1;
-        async_send(self, web_memory->refs[i], make_message(msg));
+        async_send(self, web_memory->refs[i], message_make(msg));
       }
     } else {
       msg = malloc(sizeof(WebMessage));
       msg->type = Done;
-      async_send(self, web_memory->leader, make_message(msg));
+      async_send(self, web_memory->leader, message_make(msg));
     }
     break;
   case Start:
@@ -149,19 +149,19 @@ void bench_web(ActorUniverse *actor_universe, int web_size, int rounds) {
     perror("sem_init");
     return;
   }
-  Actor *leader = spawn_actor(actor_universe, &leader_actor, sizeof(WebMemory));
+  Actor *leader = actor_spawn(actor_universe, &leader_actor, sizeof(WebMemory));
   WebMessage *leader_init_message = malloc(sizeof(WebMessage));
   leader_init_message->type = Init;
   leader_init_message->i = rounds;
   leader_init_message->web_size = web_size;
-  async_send(NULL, leader, make_message(leader_init_message));
+  async_send(NULL, leader, message_make(leader_init_message));
 
   Actor *web_actors[web_size];
   for (int i = 0; i < web_size; i++) {
-    web_actors[i] = spawn_actor(actor_universe, &web_actor, sizeof(WebMemory));
+    web_actors[i] = actor_spawn(actor_universe, &web_actor, sizeof(WebMemory));
     WebMessage *init_message = malloc(sizeof(WebMessage));
     init_message->type = Init;
-    async_send(NULL, web_actors[i], make_message(init_message));
+    async_send(NULL, web_actors[i], message_make(init_message));
   }
 
   for (int web_index = 0; web_index < web_size; web_index++) {
@@ -170,13 +170,13 @@ void bench_web(ActorUniverse *actor_universe, int web_size, int rounds) {
     WebMessage *share_ref_to_leader = malloc(sizeof(WebMessage));
     share_ref_to_leader->type = ShareRef;
     share_ref_to_leader->ref = web_actors[web_index];
-    async_send(NULL, leader, make_message(share_ref_to_leader));
+    async_send(NULL, leader, message_make(share_ref_to_leader));
 
     // Share the leader with the web actors
     WebMessage *share_leader = malloc(sizeof(WebMessage));
     share_leader->type = ShareLeader;
     share_leader->ref = leader;
-    async_send(NULL, web_actors[web_index], make_message(share_leader));
+    async_send(NULL, web_actors[web_index], message_make(share_leader));
 
     // Share the web actors with the web actors
     for (int inner_web_index = 0; inner_web_index < web_size;
@@ -184,14 +184,14 @@ void bench_web(ActorUniverse *actor_universe, int web_size, int rounds) {
       WebMessage *share_ref = malloc(sizeof(WebMessage));
       share_ref->type = ShareRef;
       share_ref->ref = web_actors[inner_web_index];
-      async_send(NULL, web_actors[web_index], make_message(share_ref));
+      async_send(NULL, web_actors[web_index], message_make(share_ref));
     }
   }
 
   WebMessage *start_message = malloc(sizeof(WebMessage));
   start_message->type = Start;
   start_message->i = rounds;
-  async_send(NULL, leader, make_message(start_message));
+  async_send(NULL, leader, message_make(start_message));
 
   sem_wait(&done);
   sem_destroy(&done);

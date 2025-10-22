@@ -23,7 +23,7 @@ void *threadpool_thread_function(void *void_args) {
 
       // We have reserved the rights to an actor, now process the message that
       // it had received
-      process_actor(actor);
+      actor_process(actor);
       LOG("thread: %d processed actor: %d\n", args->thread_index,
           available_actor_index);
       pthread_mutex_lock(&args->actor_universe->actor_queue_mutex);
@@ -39,7 +39,7 @@ void *threadpool_thread_function(void *void_args) {
   pthread_exit(NULL);
 }
 
-Threadpool *make_threadpool(ActorUniverse *actor_universe,
+Threadpool *threadpool_make(ActorUniverse *actor_universe,
                             int number_of_threads) {
   Threadpool *threadpool = malloc(sizeof(Threadpool));
   threadpool->threads = calloc(number_of_threads, sizeof(pthread_t));
@@ -58,7 +58,7 @@ Threadpool *make_threadpool(ActorUniverse *actor_universe,
   return threadpool;
 }
 
-void stop_threadpool(Threadpool *threadpool) {
+void threadpool_stop(Threadpool *threadpool) {
   g_threadpool_continue = 0;
   for (int thread_index = 0; thread_index < threadpool->number_of_threads;
        thread_index++) {
@@ -67,7 +67,7 @@ void stop_threadpool(Threadpool *threadpool) {
   }
 }
 
-void free_threadpool(Threadpool *threadpool) {
+void threadpool_free(Threadpool *threadpool) {
   free(threadpool->threads);
   free(threadpool);
 }

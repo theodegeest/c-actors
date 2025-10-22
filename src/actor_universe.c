@@ -5,7 +5,7 @@
 #include <stdlib.h>
 #include <unistd.h>
 
-ActorUniverse *make_actor_universe() {
+ActorUniverse *actor_universe_make() {
   ActorUniverse *actor_universe = malloc(sizeof(ActorUniverse));
 
   actor_universe->actor_queue =
@@ -20,9 +20,9 @@ ActorUniverse *make_actor_universe() {
   return actor_universe;
 }
 
-void free_actor_universe(ActorUniverse *actor_universe) {
+void actor_universe_free(ActorUniverse *actor_universe) {
   for (int i = 0; i < actor_universe->actor_queue_current_capacity; i++) {
-    free_actor(actor_universe->actor_queue[i]);
+    actor_free(actor_universe->actor_queue[i]);
   }
   free(actor_universe->actor_queue);
   free(actor_universe->actor_reservations);
