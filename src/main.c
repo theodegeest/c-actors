@@ -12,6 +12,7 @@
 #include "threadpool.h"
 
 #include "bench_ping_pong.h"
+#include "bench_chain.h"
 
 void my_actor(Actor *self, Letter *letter) {
   printf("%s\n", (char *)letter->message->payload);
@@ -21,7 +22,8 @@ int main(int argc, char *argv[]) {
   ActorUniverse *actor_universe = make_actor_universe();
   Threadpool *threadpool = make_threadpool(actor_universe);
 
-  bench_ping_pong(actor_universe);
+  // bench_ping_pong(actor_universe);
+  bench_chain(actor_universe, 5);
 
   // Actor *actor = spawn_actor(actor_universe, &my_actor);
   // for (int i = 0; i < 100; i++) {

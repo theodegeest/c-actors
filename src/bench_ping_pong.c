@@ -15,7 +15,7 @@ typedef struct {
 } PingPongMemory;
 
 #define ROUNDS 10000000
-struct timespec start_time, stop_time;
+static struct timespec start_time, stop_time;
 
 void ping_pong_actor(Actor *self, Letter *letter) {
   PingPongMessage *message = letter->message->payload;

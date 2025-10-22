@@ -56,7 +56,6 @@ void process_actor(Actor *actor) {
   free_letter(letter);
 }
 
-
 void sync_send(Actor *sender, Actor *receiver, Message *message) {
   // Letter *letter = make_letter(self, message);
   // receiver->behaviour_function(self, letter);
@@ -71,13 +70,13 @@ void async_send(Actor *sender, Actor *receiver, Message *message) {
     int letter_index =
         (receiver->mailbox_begin_index + receiver->mailbox_capacity) %
         MAILBOX_MAX_CAPACITY;
-    log("put letter '%s' in a mailbox at index: %d\n", (char *)message->payload,
-        letter_index);
+    // log("put letter '%s' in a mailbox at index: %d\n", (char
+    // *)message->payload,
+    //     letter_index);
     receiver->mailbox[letter_index] = make_letter(sender, message);
     receiver->mailbox_capacity++;
   } else {
-    warning("WARNING: a message '%s' has been dropped!\n",
-            (char *)message->payload);
+    warning("WARNING: a message has been dropped!\n");
   }
 
   pthread_mutex_unlock(&receiver->mailbox_mutex);

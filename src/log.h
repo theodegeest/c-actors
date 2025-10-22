@@ -5,7 +5,7 @@
 
 // ******* LOGGING LEVEL SELECTION
 
-// #define LOGGING
+#define LOGGING
 #define LOG_WARNING
 
 // ******* LOGGING LEVEL SELECTION
