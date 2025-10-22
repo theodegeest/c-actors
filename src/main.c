@@ -20,10 +20,10 @@ void my_actor(Actor *self, Letter *letter) {
 
 int main(int argc, char *argv[]) {
   ActorUniverse *actor_universe = make_actor_universe();
-  Threadpool *threadpool = make_threadpool(actor_universe, 8);
+  Threadpool *threadpool = make_threadpool(actor_universe, 4);
 
-  // bench_ping_pong(actor_universe);
-  bench_chain(actor_universe, 5000, 5000);
+  // bench_ping_pong(actor_universe, 500000);
+  bench_chain(actor_universe, 500, 5000);
 
   // Actor *actor = spawn_actor(actor_universe, &my_actor);
   // for (int i = 0; i < 100; i++) {

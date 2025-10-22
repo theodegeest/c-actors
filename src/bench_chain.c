@@ -81,8 +81,7 @@ void chain_actor(Actor *self, Letter *letter) {
 
 void bench_chain(ActorUniverse *actor_universe, int chain_length, int rounds) {
 
-  if (sem_init(&done, 0, 0) !=
-      0) { // pshared=0 -> semaphore is local to this process
+  if (sem_init(&done, 0, 0) != 0) { 
     perror("sem_init");
     return;
   }
@@ -114,8 +113,7 @@ void bench_chain(ActorUniverse *actor_universe, int chain_length, int rounds) {
   }
   // sleep(5);
 
-  printf("main: waiting for worker signal...\n");
-  sem_wait(&done); // block until worker calls sem_post
+  sem_wait(&done);
   printf("sink: %f\n", sink);
   sem_destroy(&done);
 }
