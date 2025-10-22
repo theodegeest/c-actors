@@ -3,6 +3,7 @@
 #include "letter.h"
 #include "log.h"
 #include <stdio.h>
+#include <unistd.h>
 
 typedef enum { Next, Init } ChainEnum;
 
@@ -39,13 +40,15 @@ void chain_end_actor(Actor *self, Letter *letter) {
       long nsec = stop_time.tv_nsec - start_time.tv_nsec;
       double elapsed_s = sec + nsec / 1e9;
       double rps = (double)chain_memory->rounds / elapsed_s;
-      printf("Chain: %d rounds in %.6f s -> %.0f messages per second\n", chain_memory->rounds,
-             elapsed_s, rps * chain_memory->chain_length);
+      printf("Chain: %d rounds in %.6f s -> %.0f messages per second\n",
+             chain_memory->rounds, elapsed_s, rps * chain_memory->chain_length);
     }
     break;
   }
   free(message);
 }
+
+volatile float sink = 0;
 
 void chain_actor(Actor *self, Letter *letter) {
   ChainMessage *message = letter->message->payload;
@@ -62,6 +65,11 @@ void chain_actor(Actor *self, Letter *letter) {
     msg = malloc(sizeof(ChainMessage));
     msg->type = Next;
     msg->i = message->i;
+    float local = 0;
+    for (int i = 0; i < message->i; i++) {
+      local += (double)10000000 / (i + 1);
+    }
+    sink += local;
     async_send(self, chain_memory->next, make_message(msg));
     break;
   }
@@ -85,7 +93,8 @@ void bench_chain(ActorUniverse *actor_universe, int chain_length, int rounds) {
   end_init_message->type = Init;
   end_init_message->i = rounds;
   end_init_message->chain_length = chain_length;
-  async_send(NULL, chain_actors[chain_length - 1], make_message(end_init_message));
+  async_send(NULL, chain_actors[chain_length - 1],
+             make_message(end_init_message));
 
   for (int message_index = rounds; message_index >= 0; message_index--) {
     ChainMessage *chain_message = malloc(sizeof(ChainMessage));
@@ -93,4 +102,6 @@ void bench_chain(ActorUniverse *actor_universe, int chain_length, int rounds) {
     chain_message->i = message_index;
     async_send(NULL, chain_actors[0], make_message(chain_message));
   }
+  sleep(5);
+  printf("sink: %f\n", sink);
 }

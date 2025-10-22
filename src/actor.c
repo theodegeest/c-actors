@@ -1,7 +1,7 @@
 #include "actor.h"
 #include "log.h"
 
-#define PROCESSING_GRANULARITY 1000
+#define PROCESSING_GRANULARITY 10
 
 Actor *make_actor(BehaviourFunction behaviour_function,
                   size_t actor_memory_size) {

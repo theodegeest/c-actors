@@ -35,7 +35,7 @@ int main(int argc, char *argv[]) {
   //   // usleep(1000);
   // }
 
-  sleep(6);
+  // sleep(6);
   log("there are currently %d actors in the actor universe\n",
       actor_universe->actor_queue_current_capacity);
 

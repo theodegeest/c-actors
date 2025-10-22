@@ -51,6 +51,7 @@ int actor_universe_get_available_actor(ActorUniverse *actor_universe) {
       actor_universe->actor_index =
           (offset_actor_index + 1) %
           actor_universe->actor_queue_current_capacity;
+      break;
     }
   }
   return available_actor_index;
