@@ -18,6 +18,9 @@ ActorUniverse *make_actor_universe() {
 }
 
 void free_actor_universe(ActorUniverse *actor_universe) {
+  for (int i = 0; i < actor_universe->actor_queue_current_capacity; i++) {
+    free_actor(actor_universe->actor_queue[i]);
+  }
   free(actor_universe->actor_queue);
   free(actor_universe->actor_reservations);
   pthread_mutex_destroy(&actor_universe->actor_queue_mutex);
