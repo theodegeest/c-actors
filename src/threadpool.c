@@ -1,6 +1,7 @@
 #include "threadpool.h"
 #include "actor.h"
 #include "log.h"
+#include <stdio.h>
 #include <stdlib.h>
 
 volatile int g_threadpool_continue = 1;
@@ -25,8 +26,10 @@ void *threadpool_thread_function(void *void_args) {
       process_actor(actor);
       log("thread: %d processed actor: %d\n", args->thread_index,
           available_actor_index);
+      pthread_mutex_lock(&args->actor_universe->actor_queue_mutex);
       actor_universe_liberate_available_actor(args->actor_universe,
                                               available_actor_index);
+      pthread_mutex_unlock(&args->actor_universe->actor_queue_mutex);
     } else {
       // No available, so unlock and give a chance to another thread
       pthread_mutex_unlock(&args->actor_universe->actor_queue_mutex);

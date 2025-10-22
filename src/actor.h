@@ -8,10 +8,11 @@
 
 typedef void (*BehaviourFunction)(struct Actor *, Letter *);
 
-#define MAILBOX_MAX_CAPACITY 10000
+#define MAILBOX_INIT_CAPACITY 10
 typedef struct Actor {
   Letter **mailbox;
-  volatile int mailbox_capacity;
+  volatile int mailbox_current_capacity;
+  int mailbox_max_capacity;
   int mailbox_begin_index;
   pthread_mutex_t mailbox_mutex;
   BehaviourFunction behaviour_function;

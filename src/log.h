@@ -26,15 +26,14 @@
 #ifdef LOG_INFO
 /* variadic macro that forwards everything after the prefix to printf.
    Use do{...}while(0) so it behaves like a statement in all contexts. */
-#define info(...)                                                               \
+#define info(...)                                                              \
   do {                                                                         \
-    printf("INFO: " __VA_ARGS__);                                           \
+    printf("INFO: " __VA_ARGS__);                                              \
   } while (0)
 #else
 /* compile-time disabled: no code, no argument evaluation */
 #define info(...) ((void)0)
 #endif
-
 
 #ifdef LOG_WARNING
 #define warning(...)                                                           \

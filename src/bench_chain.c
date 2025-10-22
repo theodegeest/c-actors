@@ -2,6 +2,7 @@
 #include "actor.h"
 #include "letter.h"
 #include "log.h"
+#include <semaphore.h>
 #include <stdio.h>
 #include <unistd.h>
 
@@ -21,6 +22,7 @@ typedef struct {
 } ChainMemory;
 
 static struct timespec start_time, stop_time;
+static sem_t done;
 
 void chain_end_actor(Actor *self, Letter *letter) {
   ChainMessage *message = letter->message->payload;
@@ -42,6 +44,7 @@ void chain_end_actor(Actor *self, Letter *letter) {
       double rps = (double)chain_memory->rounds / elapsed_s;
       printf("Chain: %d rounds in %.6f s -> %.0f messages per second\n",
              chain_memory->rounds, elapsed_s, rps * chain_memory->chain_length);
+      sem_post(&done);
     }
     break;
   }
@@ -77,6 +80,13 @@ void chain_actor(Actor *self, Letter *letter) {
 }
 
 void bench_chain(ActorUniverse *actor_universe, int chain_length, int rounds) {
+
+  if (sem_init(&done, 0, 0) !=
+      0) { // pshared=0 -> semaphore is local to this process
+    perror("sem_init");
+    return;
+  }
+
   Actor *chain_actors[chain_length];
   chain_actors[chain_length - 1] =
       spawn_actor(actor_universe, &chain_end_actor, sizeof(ChainMemory));
@@ -102,6 +112,10 @@ void bench_chain(ActorUniverse *actor_universe, int chain_length, int rounds) {
     chain_message->i = message_index;
     async_send(NULL, chain_actors[0], make_message(chain_message));
   }
-  sleep(5);
+  // sleep(5);
+
+  printf("main: waiting for worker signal...\n");
+  sem_wait(&done); // block until worker calls sem_post
   printf("sink: %f\n", sink);
+  sem_destroy(&done);
 }

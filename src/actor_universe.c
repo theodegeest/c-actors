@@ -1,6 +1,9 @@
 #include "actor_universe.h"
 #include "actor.h"
+#include <stdio.h>
 #include <stdlib.h>
+#include <unistd.h>
+#include "log.h"
 
 ActorUniverse *make_actor_universe() {
   ActorUniverse *actor_universe = malloc(sizeof(ActorUniverse));
@@ -28,6 +31,9 @@ void free_actor_universe(ActorUniverse *actor_universe) {
 }
 
 void actor_universe_double_size(ActorUniverse *actor_universe) {
+  log("Doubling universe, cur: %d, max %d\n",
+         actor_universe->actor_queue_current_capacity,
+         actor_universe->actor_queue_max_capacity);
   int actor_queue_new_capacity = actor_universe->actor_queue_max_capacity * 2;
   actor_universe->actor_queue = realloc(
       actor_universe->actor_queue, sizeof(Actor *) * actor_queue_new_capacity);
@@ -44,8 +50,13 @@ int actor_universe_get_available_actor(ActorUniverse *actor_universe) {
        actor_index++) {
     int offset_actor_index = (actor_index + actor_universe->actor_index) %
                              actor_universe->actor_queue_current_capacity;
+    // printf("id: %d, res: %d, mailbox_cap: %d\n", offset_actor_index,
+    //        actor_universe->actor_reservations[offset_actor_index],
+    //        actor_universe->actor_queue[offset_actor_index]
+    //            ->mailbox_current_capacity);
     if (!actor_universe->actor_reservations[offset_actor_index] &&
-        actor_universe->actor_queue[offset_actor_index]->mailbox_capacity > 0) {
+        actor_universe->actor_queue[offset_actor_index]
+                ->mailbox_current_capacity > 0) {
       // This actor is not reserved and has mail, so it is available
       available_actor_index = offset_actor_index;
       actor_universe->actor_index =
