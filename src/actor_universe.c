@@ -50,7 +50,7 @@ int actor_universe_get_available_actor(ActorUniverse *actor_universe) {
        actor_index++) {
     int offset_actor_index = (actor_index + actor_universe->actor_index) %
                              actor_universe->actor_queue_current_capacity;
-    // printf("id: %d, res: %d, mailbox_cap: %d\n", offset_actor_index,
+    // LOG("id: %d, res: %d, mailbox_cap: %d\n", offset_actor_index,
     //        actor_universe->actor_reservations[offset_actor_index],
     //        actor_universe->actor_queue[offset_actor_index]
     //            ->mailbox_current_capacity);

@@ -50,7 +50,7 @@ static void actor_process_one_letter(Actor *actor) {
   pthread_mutex_lock(&actor->mailbox_mutex);
 
   Letter *letter_p = actor->mailbox[actor->mailbox_begin_index];
-  // printf("begin_index: %d, current_cap: %d, max_cap %d, letter_p %p\n",
+  // LOG("begin_index: %d, current_cap: %d, max_cap %d, letter_p %p\n",
   //        actor->mailbox_begin_index, actor->mailbox_current_capacity,
   //        actor->mailbox_max_capacity, letter_p);
   if (letter_p == NULL) {
@@ -95,7 +95,7 @@ static void actor_double_mailbox_size(Actor *actor) {
   for (int i = 0; i < actor->mailbox_max_capacity; i++) {
     int offset_i =
         (i + actor->mailbox_begin_index) % actor->mailbox_max_capacity;
-    // printf("max: %d, i: %d, offset_i: %d\n", actor->mailbox_max_capacity, i,
+    // LOG("max: %d, i: %d, offset_i: %d\n", actor->mailbox_max_capacity, i,
     //        offset_i);
     new_mailbox[i] = actor->mailbox[offset_i];
   }
@@ -118,7 +118,6 @@ void async_send(Actor *sender, Actor *receiver, Message *message) {
   int letter_index =
       (receiver->mailbox_begin_index + receiver->mailbox_current_capacity) %
       receiver->mailbox_max_capacity;
-  // printf("Put letter in mailbox\n");
   // LOG("put letter '%s' in a mailbox at index: %d\n", (char
   // *)message->payload,
   //     letter_index);
