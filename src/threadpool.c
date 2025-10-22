@@ -24,7 +24,7 @@ void *threadpool_thread_function(void *void_args) {
       // We have reserved the rights to an actor, now process the message that
       // it had received
       process_actor(actor);
-      log("thread: %d processed actor: %d\n", args->thread_index,
+      LOG("thread: %d processed actor: %d\n", args->thread_index,
           available_actor_index);
       pthread_mutex_lock(&args->actor_universe->actor_queue_mutex);
       actor_universe_liberate_available_actor(args->actor_universe,

@@ -14,13 +14,13 @@
 #ifdef LOGGING
 /* variadic macro that forwards everything after the prefix to printf.
    Use do{...}while(0) so it behaves like a statement in all contexts. */
-#define log(...)                                                               \
+#define LOG(...)                                                               \
   do {                                                                         \
     printf("LOGGING: " __VA_ARGS__);                                           \
   } while (0)
 #else
 /* compile-time disabled: no code, no argument evaluation */
-#define log(...) ((void)0)
+#define LOG(...) ((void)0)
 #endif
 
 #ifdef LOG_INFO

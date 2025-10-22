@@ -3,7 +3,7 @@
 #include <stdio.h>
 #include <string.h>
 
-#define PROCESSING_GRANULARITY 10
+#define PROCESSING_GRANULARITY 100
 
 Actor *make_actor(BehaviourFunction behaviour_function,
                   size_t actor_memory_size) {
@@ -85,7 +85,7 @@ void sync_send(Actor *sender, Actor *receiver, Message *message) {
 }
 
 static void actor_double_mailbox_size(Actor *actor) {
-  log("Doubling the size of the mailbox of an actor\n");
+  LOG("Doubling the size of the mailbox of an actor\n");
   int actor_new_capacity = actor->mailbox_max_capacity * 2;
   Letter **new_mailbox = calloc(actor_new_capacity, sizeof(Letter *));
   if (new_mailbox == NULL) {
@@ -118,7 +118,8 @@ void async_send(Actor *sender, Actor *receiver, Message *message) {
   int letter_index =
       (receiver->mailbox_begin_index + receiver->mailbox_current_capacity) %
       receiver->mailbox_max_capacity;
-  // log("put letter '%s' in a mailbox at index: %d\n", (char
+  // printf("Put letter in mailbox\n");
+  // LOG("put letter '%s' in a mailbox at index: %d\n", (char
   // *)message->payload,
   //     letter_index);
   receiver->mailbox[letter_index] = make_letter(sender, message);

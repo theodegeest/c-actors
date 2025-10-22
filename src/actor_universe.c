@@ -31,7 +31,7 @@ void free_actor_universe(ActorUniverse *actor_universe) {
 }
 
 void actor_universe_double_size(ActorUniverse *actor_universe) {
-  log("Doubling universe, cur: %d, max %d\n",
+  LOG("Doubling universe, cur: %d, max %d\n",
       actor_universe->actor_queue_current_capacity,
       actor_universe->actor_queue_max_capacity);
   int actor_queue_new_capacity = actor_universe->actor_queue_max_capacity * 2;

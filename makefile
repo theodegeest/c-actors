@@ -5,9 +5,9 @@ TESTS=$(wildcard $(TEST)/*.c)
 TESTSBINS=$(patsubst $(TEST)/%.c, $(TEST)/bin/%, $(TESTS))
 
 CC := gcc
-CFLAGS := -Wall -O3
+CFLAGS := -Wall -O3 -lm
 # CFLAGS := -Wall
-LFLAGS :=
+LFLAGS := -lm
 ZIPNAME := project.zip
 BIN := bin
 OBJ := obj
@@ -21,6 +21,7 @@ ASAN_LFLAGS := -fsanitize=address
 $(shell mkdir -p obj bin)
 
 all: $(target) $(BIN) $(OBJ)
+	@echo "Tip: use 'make -j' for faster builds"
 
 debug: CFLAGS = -Wall -g
 debug: clean

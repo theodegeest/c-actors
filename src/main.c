@@ -8,19 +8,21 @@
 
 #include "bench_chain.h"
 #include "bench_ping_pong.h"
+#include "bench_web.h"
 
 int main(int argc, char *argv[]) {
   ActorUniverse *actor_universe = make_actor_universe();
   Threadpool *threadpool = make_threadpool(actor_universe, 4);
 
   // bench_ping_pong(actor_universe, 500000);
-  bench_chain(actor_universe, 500, 5000);
+  bench_chain(actor_universe, 500, 500);
+  // bench_web(actor_universe, 10, 6);
 
-  log("there are currently %d actors in the actor universe\n",
+  LOG("there are currently %d actors in the actor universe\n",
       actor_universe->actor_queue_current_capacity);
 
   stop_threadpool(threadpool);
-  log("Threadpool stopped\n");
+  LOG("Threadpool stopped\n");
 
   free_threadpool(threadpool);
   free_actor_universe(actor_universe);
