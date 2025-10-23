@@ -4,7 +4,9 @@
 #include "log.h"
 #include <math.h>
 #include <semaphore.h>
+#include <stddef.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <unistd.h>
 
 typedef enum { Next, ShareRef, ShareLeader, Init, Start, Done } WebEnum;
@@ -17,7 +19,7 @@ typedef struct {
 } WebMessage;
 
 typedef struct {
-  Actor *refs[100];
+  Actor **refs;
   Actor *leader;
   int rounds;
   int web_size;
@@ -39,6 +41,18 @@ static int total_number_of_messages(int web_size, int rounds) {
 
 static int total_number_of_done(int web_size, int rounds) {
   return pow(web_size, rounds + 1);
+}
+
+static void *web_allocator(void *web_size) {
+  WebMemory *memory = malloc(sizeof(WebMemory));
+  memory->refs = calloc(*(int *)web_size, sizeof(WebMemory *));
+  return memory;
+}
+
+static void web_deallocator(void *memory) {
+  WebMemory *web_memory = (WebMemory *)memory;
+  free(web_memory->refs);
+  free(web_memory);
 }
 
 void leader_actor(Actor *self, Letter *letter) {
@@ -149,7 +163,8 @@ void bench_web(ActorUniverse *actor_universe, int web_size, int rounds) {
     perror("sem_init");
     return;
   }
-  Actor *leader = actor_spawn(actor_universe, &leader_actor, sizeof(WebMemory));
+  Actor *leader = actor_spawn(actor_universe, &leader_actor, &web_allocator,
+                              &web_size, &web_deallocator);
   WebMessage *leader_init_message = malloc(sizeof(WebMessage));
   leader_init_message->type = Init;
   leader_init_message->i = rounds;
@@ -158,7 +173,8 @@ void bench_web(ActorUniverse *actor_universe, int web_size, int rounds) {
 
   Actor *web_actors[web_size];
   for (int i = 0; i < web_size; i++) {
-    web_actors[i] = actor_spawn(actor_universe, &web_actor, sizeof(WebMemory));
+    web_actors[i] =
+        actor_spawn(actor_universe, &web_actor, &web_allocator, &web_size, &web_deallocator);
     WebMessage *init_message = malloc(sizeof(WebMessage));
     init_message->type = Init;
     async_send(NULL, web_actors[i], message_make(init_message));

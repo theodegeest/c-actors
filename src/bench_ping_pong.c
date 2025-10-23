@@ -2,6 +2,7 @@
 #include "actor.h"
 #include <semaphore.h>
 #include <stdio.h>
+#include <stdlib.h>
 
 typedef enum { Ping, Pong, Init } PingPongEnum;
 
@@ -18,6 +19,10 @@ typedef struct {
 
 static struct timespec start_time, stop_time;
 static sem_t done;
+
+static void *ping_pong_allocator(void *arg) { return malloc(sizeof(PingPongMemory)); }
+
+static void ping_pong_deallocator(void *memory) { free(memory); }
 
 void ping_pong_actor(Actor *self, Letter *letter) {
   PingPongMessage *message = letter->message->payload;
@@ -65,10 +70,10 @@ void bench_ping_pong(ActorUniverse *actor_universe, int rounds) {
     return;
   }
 
-  Actor *ping_actor =
-      actor_spawn(actor_universe, &ping_pong_actor, sizeof(PingPongMemory));
-  Actor *pong_actor =
-      actor_spawn(actor_universe, &ping_pong_actor, sizeof(PingPongMemory));
+  Actor *ping_actor = actor_spawn(actor_universe, &ping_pong_actor,
+                                  &ping_pong_allocator, NULL, &ping_pong_deallocator);
+  Actor *pong_actor = actor_spawn(actor_universe, &ping_pong_actor,
+                                  &ping_pong_allocator, NULL, &ping_pong_deallocator);
 
   PingPongMessage *ping_init_message = malloc(sizeof(PingPongMessage));
   ping_init_message->type = Init;

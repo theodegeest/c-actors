@@ -4,6 +4,7 @@
 #include "log.h"
 #include <semaphore.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <unistd.h>
 
 typedef enum { Next, Init } ChainEnum;
@@ -23,6 +24,10 @@ typedef struct {
 
 static struct timespec start_time, stop_time;
 static sem_t done;
+
+static void *chain_allocator(void *arg) { return malloc(sizeof(ChainMemory)); }
+
+static void chain_deallocator(void *memory) { free(memory); }
 
 void chain_end_actor(Actor *self, Letter *letter) {
   ChainMessage *message = letter->message->payload;
@@ -88,10 +93,11 @@ void bench_chain(ActorUniverse *actor_universe, int chain_length, int rounds) {
 
   Actor *chain_actors[chain_length];
   chain_actors[chain_length - 1] =
-      actor_spawn(actor_universe, &chain_end_actor, sizeof(ChainMemory));
+      actor_spawn(actor_universe, &chain_end_actor, &chain_allocator, NULL,
+                  &chain_deallocator);
   for (int i = chain_length - 2; i >= 0; i--) {
-    chain_actors[i] =
-        actor_spawn(actor_universe, &chain_actor, sizeof(ChainMemory));
+    chain_actors[i] = actor_spawn(actor_universe, &chain_actor,
+                                  &chain_allocator, NULL, &chain_deallocator);
     ChainMessage *init_message = malloc(sizeof(ChainMessage));
     init_message->type = Init;
     init_message->next = chain_actors[i + 1];

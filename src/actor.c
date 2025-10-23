@@ -6,28 +6,32 @@
 #define PROCESSING_GRANULARITY 100
 
 Actor *actor_make(BehaviourFunction behaviour_function,
-                  size_t actor_memory_size) {
+                  AllocatorFunction allocator_function, void *allocator_arg,
+                  DeallocatorFunction deallocator_function) {
   Actor *actor = malloc(sizeof(Actor));
   actor->behaviour_function = behaviour_function;
+  actor->deallocator_function = deallocator_function;
   actor->mailbox = calloc(MAILBOX_INIT_CAPACITY, sizeof(Letter *));
   actor->mailbox_current_capacity = 0;
   actor->mailbox_max_capacity = MAILBOX_INIT_CAPACITY;
   actor->mailbox_begin_index = 0;
   pthread_mutex_init(&actor->mailbox_mutex, NULL);
-  actor->memory = malloc(actor_memory_size);
+  actor->memory = allocator_function(allocator_arg);
   return actor;
 }
 
 Actor *actor_spawn(ActorUniverse *actor_universe,
                    BehaviourFunction behaviour_function,
-                   size_t actor_memory_size) {
+                   AllocatorFunction allocator_function, void *allocator_arg,
+                   DeallocatorFunction deallocator_function) {
   pthread_mutex_lock(&actor_universe->actor_queue_mutex);
   if (actor_universe->actor_queue_current_capacity >=
       actor_universe->actor_queue_max_capacity - 1) {
     actor_universe_double_size(actor_universe);
   }
 
-  Actor *actor = actor_make(behaviour_function, actor_memory_size);
+  Actor *actor = actor_make(behaviour_function, allocator_function,
+                            allocator_arg, deallocator_function);
 
   actor_universe
       ->actor_reservations[actor_universe->actor_queue_current_capacity] = 0;
@@ -40,7 +44,7 @@ Actor *actor_spawn(ActorUniverse *actor_universe,
 
 void actor_free(Actor *actor) {
   free(actor->mailbox);
-  free(actor->memory);
+  actor->deallocator_function(actor->memory);
   pthread_mutex_destroy(&actor->mailbox_mutex);
   free(actor);
 }

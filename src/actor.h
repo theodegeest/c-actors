@@ -7,6 +7,8 @@
 #include <stdlib.h>
 
 typedef void (*BehaviourFunction)(struct Actor *, Letter *);
+typedef void *(*AllocatorFunction)(void *);
+typedef void (*DeallocatorFunction)(void *);
 
 #define MAILBOX_INIT_CAPACITY 10
 typedef struct Actor {
@@ -16,15 +18,18 @@ typedef struct Actor {
   int mailbox_begin_index;
   pthread_mutex_t mailbox_mutex;
   BehaviourFunction behaviour_function;
+  DeallocatorFunction deallocator_function;
   void *memory;
 } Actor;
 
 Actor *actor_make(BehaviourFunction behaviour_function,
-                  size_t actor_memory_size);
+                  AllocatorFunction allocator_function, void *allocator_arg,
+                  DeallocatorFunction deallocator_function);
 
 Actor *actor_spawn(ActorUniverse *actor_universe,
                    BehaviourFunction behaviour_function,
-                   size_t actor_memory_size);
+                   AllocatorFunction allocator_function, void *allocator_arg,
+                   DeallocatorFunction deallocator_function);
 
 void actor_free(Actor *actor);
 
