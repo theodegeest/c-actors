@@ -1,6 +1,9 @@
 #include "actor.h"
+#include "letter.h"
 #include "log.h"
+#include <semaphore.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 
 #define PROCESSING_GRANULARITY 100
@@ -70,6 +73,9 @@ static void actor_process_one_letter(Actor *actor) {
   // allowed to put letters in our mailbox
 
   actor->behaviour_function(actor, letter_p);
+  if (letter_p->sync_letter) {
+    sem_post(&letter_p->sync_semaphore);
+  }
   letter_free(letter_p);
 }
 
@@ -80,12 +86,6 @@ void actor_process(Actor *actor) {
     }
     actor_process_one_letter(actor);
   }
-}
-
-void sync_send(Actor *sender, Actor *receiver, Message *message) {
-  // Letter *letter = make_letter(self, message);
-  // receiver->behaviour_function(self, letter);
-  // free_letter(letter);
 }
 
 static void actor_double_mailbox_size(Actor *actor) {
@@ -110,7 +110,7 @@ static void actor_double_mailbox_size(Actor *actor) {
   actor->mailbox_begin_index = 0;
 }
 
-void async_send(Actor *sender, Actor *receiver, Message *message) {
+static void send_letter(Actor *sender, Actor *receiver, Letter *letter) {
   // lock on the mailbox of this actor to add a letter to it
   pthread_mutex_lock(&receiver->mailbox_mutex);
 
@@ -125,8 +125,21 @@ void async_send(Actor *sender, Actor *receiver, Message *message) {
   // LOG("put letter '%s' in a mailbox at index: %d\n", (char
   // *)message->payload,
   //     letter_index);
-  receiver->mailbox[letter_index] = letter_make(sender, message);
+  receiver->mailbox[letter_index] = letter;
   receiver->mailbox_current_capacity++;
 
   pthread_mutex_unlock(&receiver->mailbox_mutex);
+}
+
+void *sync_send(Actor *sender, Actor *receiver, Message *message) {
+  void *return_value;
+  Letter *letter = letter_make(sender, message, &return_value);
+  send_letter(sender, receiver, letter);
+  sem_wait(&letter->sync_semaphore);
+  return return_value;
+}
+
+void async_send(Actor *sender, Actor *receiver, Message *message) {
+  Letter *letter = letter_make(sender, message, NULL);
+  send_letter(sender, receiver, letter);
 }

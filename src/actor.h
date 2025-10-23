@@ -22,9 +22,9 @@ typedef struct Actor {
   void *memory;
 } Actor;
 
-Actor *actor_make(BehaviourFunction behaviour_function,
-                  AllocatorFunction allocator_function, void *allocator_arg,
-                  DeallocatorFunction deallocator_function);
+// Actor *actor_make(BehaviourFunction behaviour_function,
+//                   AllocatorFunction allocator_function, void *allocator_arg,
+//                   DeallocatorFunction deallocator_function);
 
 Actor *actor_spawn(ActorUniverse *actor_universe,
                    BehaviourFunction behaviour_function,
@@ -35,7 +35,7 @@ void actor_free(Actor *actor);
 
 void actor_process(Actor *actor);
 
-void sync_send(Actor *sender, Actor *receiver, Message *message);
+void *sync_send(Actor *sender, Actor *receiver, Message *message);
 
 void async_send(Actor *sender, Actor *receiver, Message *message);
 

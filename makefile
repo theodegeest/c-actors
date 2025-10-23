@@ -18,7 +18,7 @@ TEST := tests
 ASAN_CFLAGS := -fsanitize=address -g -O1 -fno-omit-frame-pointer
 ASAN_LFLAGS := -fsanitize=address
 
-$(shell mkdir -p obj bin)
+$(shell mkdir -p obj bin tests/bin)
 
 all: $(target) $(BIN) $(OBJ)
 	@echo "Tip: use 'make -j' for faster builds"
@@ -48,12 +48,12 @@ zip:
 	zip $(ZIPNAME) $(SRC)/*
 
 
-test: $(target) $(TESTSBINS)
+test: $(TESTSBINS)
 	for test in $(TESTSBINS) ; do ./$$test --verbose ; done
 
 
-$(TEST)/bin/%: $(TEST)/%.c obj/file.o
-	$(CC) $(CFLAGS) $< obj/file.o -o $@ -lcriterion
+$(TEST)/bin/%: $(TEST)/%.c $(OBJS)
+	$(CC) $(CFLAGS) -o $@ $(filter-out obj/main.o, $^) -lcriterion $(LFLAGS)
 
 
 run: $(target)

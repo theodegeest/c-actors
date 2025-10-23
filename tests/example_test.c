@@ -1,11 +1,13 @@
 #include <criterion/criterion.h>
 
-#include "../src/file.h"
+#include "../src/actor_universe.h"
+#include "../src/message.h"
+#include "../src/log.h"
+#include "../src/threadpool.h"
 
-Test(project_test, example) {
-  cr_expect(1 == 1, "This is an example.");
-}
-
-Test(project_test, example_2) {
-  cr_expect(doStuff() == 0, "This is also an example.");
+Test(message, allocation) {
+  int x = 42;
+  Message *message = message_make(&x);
+  cr_expect(*(int *)message->payload == 42, "Message should carry a payload.");
+  message_free(message);
 }
