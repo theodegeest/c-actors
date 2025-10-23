@@ -78,19 +78,18 @@ void bench_ping_pong(ActorUniverse *actor_universe, int rounds) {
                   &ping_pong_deallocator);
 
   PingPongMessage *ping_init_message = malloc(sizeof(PingPongMessage));
-  *ping_init_message = (PingPongMessage){.type = Init, .ref = pong_actor, .i = rounds};
+  *ping_init_message =
+      (PingPongMessage){.type = Init, .ref = pong_actor, .i = rounds};
 
   PingPongMessage *pong_init_message = malloc(sizeof(PingPongMessage));
-  pong_init_message->type = Init;
-  pong_init_message->ref = ping_actor;
-  ping_init_message->i = rounds;
+  *pong_init_message =
+      (PingPongMessage){.type = Init, .ref = ping_actor, .i = rounds};
 
   async_send(NULL, ping_actor, message_make(ping_init_message));
   async_send(NULL, pong_actor, message_make(pong_init_message));
 
   PingPongMessage *ping_message = malloc(sizeof(PingPongMessage));
-  ping_message->type = Ping;
-  ping_message->i = rounds;
+  *ping_message = (PingPongMessage){.type = Ping, .i = rounds};
 
   clock_gettime(CLOCK_MONOTONIC, &start_time);
   async_send(NULL, ping_actor, message_make(ping_message));
