@@ -3,6 +3,6 @@
 
 #include "actor_universe.h"
 
-void bench_chain(ActorUniverse *actor_universe, int chain_length, int rounds);
+void bench_chain(ActorUniverse *actor_universe, int dummy_count, int chain_length, int rounds);
 
 #endif // !BENCH_CHAIN_H_

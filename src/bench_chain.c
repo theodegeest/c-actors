@@ -83,11 +83,17 @@ void chain_actor(Actor *self, Letter *letter) {
   free(message);
 }
 
-void bench_chain(ActorUniverse *actor_universe, int chain_length, int rounds) {
+void bench_chain(ActorUniverse *actor_universe, int dummy_count, int chain_length, int rounds) {
 
   if (sem_init(&done, 0, 0) != 0) {
     perror("sem_init");
     return;
+  }
+
+  // Dummy actors
+  for (int i = 0; i < dummy_count; i++) {
+    actor_spawn(actor_universe, &chain_actor, &chain_allocator, NULL,
+                &chain_deallocator);
   }
 
   Actor *chain_actors[chain_length];
