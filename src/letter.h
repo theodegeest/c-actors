@@ -9,7 +9,7 @@ typedef struct {
   Message *message;
   char sync_letter;
   sem_t sync_semaphore;
-  void *sync_return;
+  void **sync_return;
 } Letter;
 
 Letter *letter_make(struct Actor *sender, Message *message, void *sync_return);
