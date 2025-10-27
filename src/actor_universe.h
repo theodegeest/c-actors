@@ -15,8 +15,11 @@ typedef struct {
   pthread_mutex_t actor_queue_mutex;
 } ActorUniverse;
 
+// This function will make an actor universe that will manage to actor system.
+// The ownership is given to the caller.
 ActorUniverse *actor_universe_make();
 
+// This function should be used to free an actor universe.
 void actor_universe_free(ActorUniverse *actor_universe);
 
 void actor_universe_double_size(ActorUniverse *actor_universe);

@@ -4,6 +4,11 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+typedef struct {
+  int thread_index;
+  ActorUniverse *actor_universe;
+} ThreadpoolArgs;
+
 volatile int g_threadpool_continue = 1;
 
 void *threadpool_thread_function(void *void_args) {

@@ -8,18 +8,15 @@ typedef struct {
   int number_of_threads;
 } Threadpool;
 
-typedef struct {
-  int thread_index;
-  ActorUniverse *actor_universe;
-} ThreadpoolArgs;
-
-void *threadpool_thread_function(void *void_args);
-
+// This function makes a threadpool.
+// The ownership is given to the caller.
 Threadpool *threadpool_make(ActorUniverse *actor_universe,
                             int number_of_threads);
 
+// This function stops a threadpool.
 void threadpool_stop(Threadpool *threadpool);
 
+// This function should be called to free a threadpool.
 void threadpool_free(Threadpool *threadpool);
 
 #endif // !THREADPOOL_H_
