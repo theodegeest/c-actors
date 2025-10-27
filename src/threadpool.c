@@ -21,7 +21,7 @@ void *threadpool_thread_function(void *void_args) {
 
     if (available_actor_index >= 0) {
       // There is an available actor, so reserve it
-      actor_universe_reserve_available_actor(args->actor_universe,
+      actor_universe_reserve_actor(args->actor_universe,
                                              available_actor_index);
       Actor *actor = args->actor_universe->actor_queue[available_actor_index];
       pthread_mutex_unlock(&args->actor_universe->actor_queue_mutex);
@@ -32,7 +32,7 @@ void *threadpool_thread_function(void *void_args) {
       LOG("thread: %d processed actor: %d\n", args->thread_index,
           available_actor_index);
       pthread_mutex_lock(&args->actor_universe->actor_queue_mutex);
-      actor_universe_liberate_available_actor(args->actor_universe,
+      actor_universe_liberate_actor(args->actor_universe,
                                               available_actor_index);
       pthread_mutex_unlock(&args->actor_universe->actor_queue_mutex);
     } else {

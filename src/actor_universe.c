@@ -30,7 +30,7 @@ void actor_universe_free(ActorUniverse *actor_universe) {
   free(actor_universe);
 }
 
-void actor_universe_double_size(ActorUniverse *actor_universe) {
+static void actor_universe_double_size(ActorUniverse *actor_universe) {
   LOG("Doubling universe, cur: %d, max %d\n",
       actor_universe->actor_queue_current_capacity,
       actor_universe->actor_queue_max_capacity);
@@ -41,6 +41,21 @@ void actor_universe_double_size(ActorUniverse *actor_universe) {
       realloc(actor_universe->actor_reservations,
               sizeof(char) * actor_queue_new_capacity);
   actor_universe->actor_queue_max_capacity = actor_queue_new_capacity;
+}
+
+void actor_universe_add_actor(ActorUniverse *actor_universe, struct Actor *actor) {
+  pthread_mutex_lock(&actor_universe->actor_queue_mutex);
+  if (actor_universe->actor_queue_current_capacity >=
+      actor_universe->actor_queue_max_capacity - 1) {
+    actor_universe_double_size(actor_universe);
+  }
+
+  actor_universe
+      ->actor_reservations[actor_universe->actor_queue_current_capacity] = 0;
+  actor_universe->actor_queue[actor_universe->actor_queue_current_capacity++] =
+      actor;
+
+  pthread_mutex_unlock(&actor_universe->actor_queue_mutex);
 }
 
 int actor_universe_get_available_actor(ActorUniverse *actor_universe) {
@@ -68,12 +83,12 @@ int actor_universe_get_available_actor(ActorUniverse *actor_universe) {
   return available_actor_index;
 }
 
-void actor_universe_reserve_available_actor(ActorUniverse *actor_universe,
+void actor_universe_reserve_actor(ActorUniverse *actor_universe,
                                             int actor_index) {
   actor_universe->actor_reservations[actor_index] = 1;
 }
 
-void actor_universe_liberate_available_actor(ActorUniverse *actor_universe,
+void actor_universe_liberate_actor(ActorUniverse *actor_universe,
                                              int actor_index) {
   actor_universe->actor_reservations[actor_index] = 0;
 }

@@ -1,4 +1,5 @@
 #include "actor.h"
+#include "actor_universe.h"
 #include "letter.h"
 #include "log.h"
 #include <semaphore.h>
@@ -27,21 +28,11 @@ Actor *actor_spawn(ActorUniverse *actor_universe,
                    BehaviourFunction behaviour_function,
                    AllocatorFunction allocator_function, void *allocator_arg,
                    DeallocatorFunction deallocator_function) {
-  pthread_mutex_lock(&actor_universe->actor_queue_mutex);
-  if (actor_universe->actor_queue_current_capacity >=
-      actor_universe->actor_queue_max_capacity - 1) {
-    actor_universe_double_size(actor_universe);
-  }
 
   Actor *actor = actor_make(behaviour_function, allocator_function,
                             allocator_arg, deallocator_function);
 
-  actor_universe
-      ->actor_reservations[actor_universe->actor_queue_current_capacity] = 0;
-  actor_universe->actor_queue[actor_universe->actor_queue_current_capacity++] =
-      actor;
-
-  pthread_mutex_unlock(&actor_universe->actor_queue_mutex);
+  actor_universe_add_actor(actor_universe, actor);
   return actor;
 }
 
@@ -111,7 +102,8 @@ static void actor_double_mailbox_size(Actor *actor) {
   actor->mailbox_begin_index = 0;
 }
 
-static void send_letter(Actor *sender, Actor *receiver, Letter *letter) {
+static void put_letter_in_mailbox(Actor *sender, Actor *receiver,
+                                  Letter *letter) {
   // lock on the mailbox of this actor to add a letter to it
   pthread_mutex_lock(&receiver->mailbox_mutex);
 
@@ -135,12 +127,12 @@ static void send_letter(Actor *sender, Actor *receiver, Letter *letter) {
 void *sync_send(Actor *sender, Actor *receiver, Message *message) {
   void *return_value;
   Letter *letter = letter_make(sender, message, &return_value);
-  send_letter(sender, receiver, letter);
+  put_letter_in_mailbox(sender, receiver, letter);
   sem_wait(&letter->sync_semaphore);
   return return_value;
 }
 
 void async_send(Actor *sender, Actor *receiver, Message *message) {
   Letter *letter = letter_make(sender, message, NULL);
-  send_letter(sender, receiver, letter);
+  put_letter_in_mailbox(sender, receiver, letter);
 }

@@ -1,6 +1,6 @@
 # C-actor TODO
 
-- review the api of actor_universe because it is not up to standards.
+- fix memory leak when stopping the actor_universe when there are still letters in the mailboxes.
 
 - make a list sorting benchmark that spawn children actors in nodes until a cutoff.
 - use a MPSC queue that can be used for the mailboxes and maybe private thread work queue. (work stealing?)
