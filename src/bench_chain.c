@@ -53,7 +53,6 @@ void chain_end_actor(Actor *self, Letter *letter) {
     }
     break;
   }
-  free(message);
 }
 
 volatile float sink = 0;
@@ -77,13 +76,13 @@ void chain_actor(Actor *self, Letter *letter) {
       local += (double)10000000 / (i + 1);
     }
     sink += local;
-    async_send(self, chain_memory->next, message_make(msg));
+    async_send(self, chain_memory->next, message_make(msg, &free));
     break;
   }
-  free(message);
 }
 
-void bench_chain(ActorUniverse *actor_universe, int dummy_count, int chain_length, int rounds) {
+void bench_chain(ActorUniverse *actor_universe, int dummy_count,
+                 int chain_length, int rounds) {
 
   if (sem_init(&done, 0, 0) != 0) {
     perror("sem_init");
@@ -105,19 +104,19 @@ void bench_chain(ActorUniverse *actor_universe, int dummy_count, int chain_lengt
                                   &chain_allocator, NULL, &chain_deallocator);
     ChainMessage *init_message = malloc(sizeof(ChainMessage));
     *init_message = (ChainMessage){.type = Init, .next = chain_actors[i + 1]};
-    async_send(NULL, chain_actors[i], message_make(init_message));
+    async_send(NULL, chain_actors[i], message_make(init_message, &free));
   }
 
   ChainMessage *end_init_message = malloc(sizeof(ChainMessage));
   *end_init_message =
       (ChainMessage){.type = Init, .i = rounds, .chain_length = chain_length};
   async_send(NULL, chain_actors[chain_length - 1],
-             message_make(end_init_message));
+             message_make(end_init_message, &free));
 
   for (int message_index = rounds; message_index >= 0; message_index--) {
     ChainMessage *chain_message = malloc(sizeof(ChainMessage));
     *chain_message = (ChainMessage){.type = Next, .i = message_index};
-    async_send(NULL, chain_actors[0], message_make(chain_message));
+    async_send(NULL, chain_actors[0], message_make(chain_message, &free));
   }
   // sleep(5);
 

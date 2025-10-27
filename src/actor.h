@@ -4,7 +4,6 @@
 #include "actor_universe.h"
 #include "letter.h"
 #include <pthread.h>
-#include <stdlib.h>
 
 typedef void (*BehaviourFunction)(struct Actor *, Letter *);
 typedef void *(*AllocatorFunction)(void *);

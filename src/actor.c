@@ -37,7 +37,12 @@ Actor *actor_spawn(ActorUniverse *actor_universe,
 }
 
 void actor_free(Actor *actor) {
-  // TODO: Maybe free all the letters in the mailboxes of the actors????
+  // free all the letter that might still be in the mailbox.
+
+  for (int i = 0; i < actor->mailbox_current_capacity; i++) {
+    letter_free(actor->mailbox[i]);
+  }
+
   free(actor->mailbox);
   actor->deallocator_function(actor->memory);
   pthread_mutex_destroy(&actor->mailbox_mutex);

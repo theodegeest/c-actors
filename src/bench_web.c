@@ -80,7 +80,7 @@ void leader_actor(Actor *self, Letter *letter) {
     for (int i = 0; i < web_memory->web_size; i++) {
       msg = malloc(sizeof(WebMessage));
       *msg = (WebMessage){.type = Next, .i = message->i};
-      async_send(self, web_memory->refs[i], message_make(msg));
+      async_send(self, web_memory->refs[i], message_make(msg, &free));
     }
     break;
   case Done:
@@ -106,7 +106,6 @@ void leader_actor(Actor *self, Letter *letter) {
     warning("Leader received a message it did not understand\n");
     break;
   }
-  free(message);
 }
 
 void web_actor(Actor *self, Letter *letter) {
@@ -134,12 +133,12 @@ void web_actor(Actor *self, Letter *letter) {
       for (int i = 0; i < web_memory->current_number_of_refs; i++) {
         msg = malloc(sizeof(WebMessage));
         *msg = (WebMessage){.type = Next, .i = message->i - 1};
-        async_send(self, web_memory->refs[i], message_make(msg));
+        async_send(self, web_memory->refs[i], message_make(msg, &free));
       }
     } else {
       msg = malloc(sizeof(WebMessage));
       msg->type = Done;
-      async_send(self, web_memory->leader, message_make(msg));
+      async_send(self, web_memory->leader, message_make(msg, &free));
     }
     break;
   case Start:
@@ -147,7 +146,6 @@ void web_actor(Actor *self, Letter *letter) {
     warning("Web actor received a message it did not understand\n");
     break;
   }
-  free(message);
 }
 
 void bench_web(ActorUniverse *actor_universe, int web_size, int rounds) {
@@ -166,7 +164,7 @@ void bench_web(ActorUniverse *actor_universe, int web_size, int rounds) {
   WebMessage *leader_init_message = malloc(sizeof(WebMessage));
   *leader_init_message =
       (WebMessage){.type = Init, .i = rounds, .web_size = web_size};
-  async_send(NULL, leader, message_make(leader_init_message));
+  async_send(NULL, leader, message_make(leader_init_message, &free));
 
   Actor *web_actors[web_size];
   for (int i = 0; i < web_size; i++) {
@@ -174,7 +172,7 @@ void bench_web(ActorUniverse *actor_universe, int web_size, int rounds) {
                                 &web_size, &web_deallocator);
     WebMessage *init_message = malloc(sizeof(WebMessage));
     init_message->type = Init;
-    async_send(NULL, web_actors[i], message_make(init_message));
+    async_send(NULL, web_actors[i], message_make(init_message, &free));
   }
 
   for (int web_index = 0; web_index < web_size; web_index++) {
@@ -183,12 +181,12 @@ void bench_web(ActorUniverse *actor_universe, int web_size, int rounds) {
     WebMessage *share_ref_to_leader = malloc(sizeof(WebMessage));
     *share_ref_to_leader =
         (WebMessage){.type = ShareRef, .ref = web_actors[web_index]};
-    async_send(NULL, leader, message_make(share_ref_to_leader));
+    async_send(NULL, leader, message_make(share_ref_to_leader, &free));
 
     // Share the leader with the web actors
     WebMessage *share_leader = malloc(sizeof(WebMessage));
     *share_leader = (WebMessage){.type = ShareLeader, .ref = leader};
-    async_send(NULL, web_actors[web_index], message_make(share_leader));
+    async_send(NULL, web_actors[web_index], message_make(share_leader, &free));
 
     // Share the web actors with the web actors
     for (int inner_web_index = 0; inner_web_index < web_size;
@@ -196,13 +194,13 @@ void bench_web(ActorUniverse *actor_universe, int web_size, int rounds) {
       WebMessage *share_ref = malloc(sizeof(WebMessage));
       *share_ref =
           (WebMessage){.type = ShareRef, .ref = web_actors[inner_web_index]};
-      async_send(NULL, web_actors[web_index], message_make(share_ref));
+      async_send(NULL, web_actors[web_index], message_make(share_ref, &free));
     }
   }
 
   WebMessage *start_message = malloc(sizeof(WebMessage));
   *start_message = (WebMessage){.type = Start, .i = rounds};
-  async_send(NULL, leader, message_make(start_message));
+  async_send(NULL, leader, message_make(start_message, &free));
 
   sem_wait(&done);
   sem_destroy(&done);
