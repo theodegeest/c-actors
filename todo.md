@@ -7,5 +7,6 @@ Maybe for the thread it would be better to use an array that can grow because th
 
 
 ## For when using speedup stack
+- memory pool
 - make sure that non-active actors are not checked by all the threads.
 - look into this MPSC queue for mailboxes (https://github.com/grivet/mpsc-queue)
