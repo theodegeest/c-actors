@@ -1,7 +1,7 @@
 # C-actor TODO
 
-- make a list sorting benchmark that spawn children actors in nodes until a cutoff.
 - make a benchmark where actors spawns other actors.
+- add a tag when default is done.
 
 ## For when using speedup stack
 - use a cond variable to make sure that if a thread has not found work it just waits until work is added. (when sending the thread mst lock + signal that work has been added.)
