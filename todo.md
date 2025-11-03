@@ -1,5 +1,6 @@
 # C-actor TODO
 
+- check is malloc succeeded!
 - make a list sorting benchmark that spawn children actors in nodes until a cutoff.
 - make a benchmark where actors spawns other actors.
 
