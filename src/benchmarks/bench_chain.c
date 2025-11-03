@@ -1,7 +1,7 @@
 #include "bench_chain.h"
-#include "actor.h"
-#include "letter.h"
-#include "log.h"
+#include "c-actors/actor.h"
+#include "c-actors/letter.h"
+#include "c-actors/log.h"
 #include <semaphore.h>
 #include <stdio.h>
 #include <stdlib.h>

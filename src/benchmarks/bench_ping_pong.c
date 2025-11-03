@@ -1,5 +1,5 @@
 #include "bench_ping_pong.h"
-#include "actor.h"
+#include "c-actors/actor.h"
 #include <semaphore.h>
 #include <stdio.h>
 #include <stdlib.h>

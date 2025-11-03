@@ -1,10 +1,10 @@
-#include "actor_universe.h"
-#include "log.h"
-#include "threadpool.h"
+#include "c-actors/actor_universe.h"
+#include "c-actors/log.h"
+#include "c-actors/threadpool.h"
 
-#include "bench_chain.h"
-#include "bench_ping_pong.h"
-#include "bench_web.h"
+#include "benchmarks/bench_chain.h"
+#include "benchmarks/bench_ping_pong.h"
+#include "benchmarks/bench_web.h"
 
 int main(int argc, char *argv[]) {
   ActorUniverse *actor_universe = actor_universe_make();
