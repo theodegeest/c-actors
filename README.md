@@ -15,3 +15,9 @@ ninja
 ```bash
 ./main
 ```
+
+# Run tests
+
+```bash
+ninja test
+```

@@ -107,7 +107,7 @@ static void actor_double_mailbox_size(Actor *actor) {
   actor->mailbox_begin_index = 0;
 }
 
-static void put_letter_in_mailbox(Actor *sender, Actor *receiver,
+static void put_letter_in_mailbox(Actor *receiver,
                                   Letter *letter) {
   // lock on the mailbox of this actor to add a letter to it
   pthread_mutex_lock(&receiver->mailbox_mutex);
@@ -132,12 +132,12 @@ static void put_letter_in_mailbox(Actor *sender, Actor *receiver,
 void *sync_send(Actor *sender, Actor *receiver, Message *message) {
   void *return_value;
   Letter *letter = letter_make(sender, message, &return_value);
-  put_letter_in_mailbox(sender, receiver, letter);
+  put_letter_in_mailbox(receiver, letter);
   sem_wait(&letter->sync_semaphore);
   return return_value;
 }
 
 void async_send(Actor *sender, Actor *receiver, Message *message) {
   Letter *letter = letter_make(sender, message, NULL);
-  put_letter_in_mailbox(sender, receiver, letter);
+  put_letter_in_mailbox(receiver, letter);
 }

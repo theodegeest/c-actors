@@ -1,7 +1,7 @@
 #include "bench_chain.h"
-#include "c-actors/actor.h"
-#include "c-actors/letter.h"
-#include "c-actors/log.h"
+#include "../c-actors/actor.h"
+#include "../c-actors/letter.h"
+#include "../c-actors/log.h"
 #include <semaphore.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -25,7 +25,9 @@ typedef struct {
 static struct timespec start_time, stop_time;
 static sem_t done;
 
-static void *chain_allocator(void *arg) { return malloc(sizeof(ChainMemory)); }
+static void *chain_allocator(__attribute__((unused)) void *arg) {
+  return malloc(sizeof(ChainMemory));
+}
 
 static void chain_deallocator(void *memory) { free(memory); }
 

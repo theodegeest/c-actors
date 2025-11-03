@@ -1,5 +1,5 @@
 #include "bench_ping_pong.h"
-#include "c-actors/actor.h"
+#include "../c-actors/actor.h"
 #include <semaphore.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -20,7 +20,7 @@ typedef struct {
 static struct timespec start_time, stop_time;
 static sem_t done;
 
-static void *ping_pong_allocator(void *arg) {
+static void *ping_pong_allocator(__attribute__((unused)) void *arg) {
   return malloc(sizeof(PingPongMemory));
 }
 

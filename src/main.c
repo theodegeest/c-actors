@@ -6,7 +6,7 @@
 #include "benchmarks/bench_ping_pong.h"
 #include "benchmarks/bench_web.h"
 
-int main(int argc, char *argv[]) {
+int main(__attribute__((unused)) int argc, __attribute__((unused)) char *argv[]) {
   ActorUniverse *actor_universe = actor_universe_make();
   Threadpool *threadpool = threadpool_make(actor_universe, 4);
 

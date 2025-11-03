@@ -2,11 +2,11 @@
 #include <semaphore.h>
 #include <stdlib.h>
 
-#include "../src/actor.h"
-#include "../src/actor_universe.h"
-#include "../src/log.h"
-#include "../src/message.h"
-#include "../src/threadpool.h"
+#include "../src/c-actors/actor.h"
+#include "../src/c-actors/actor_universe.h"
+#include "../src/c-actors/log.h"
+#include "../src/c-actors/message.h"
+#include "../src/c-actors/threadpool.h"
 
 typedef enum { Get } ClientEnum;
 typedef enum { GetValue } ServerEnum;
@@ -56,13 +56,12 @@ void client_actor(Actor *self, Letter *letter) {
     // printf("Pong %d\n", message->i);
     msg = malloc(sizeof(ServerMessage));
     *msg = (ServerMessage){.type = GetValue};
-    int *ret = sync_send(self, memory->server, message_make(msg));
+    int *ret = sync_send(self, memory->server, message_make(msg, &free));
     result = *ret;
     free(ret);
     sem_post(&done);
     break;
   }
-  free(message);
 }
 
 void server_actor(Actor *self, Letter *letter) {
@@ -77,7 +76,6 @@ void server_actor(Actor *self, Letter *letter) {
     *letter->sync_return = ret;
     break;
   }
-  free(message);
 }
 
 Test(sync_server_client, test1) {
@@ -99,7 +97,7 @@ Test(sync_server_client, test1) {
   ClientMessage *client_message = malloc(sizeof(ClientMessage));
   *client_message = (ClientMessage){.type = Get};
 
-  async_send(NULL, client, message_make(client_message));
+  async_send(NULL, client, message_make(client_message, &free));
 
   sem_wait(&done);
   sem_destroy(&done);

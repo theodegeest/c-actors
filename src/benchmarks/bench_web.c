@@ -1,7 +1,7 @@
 #include "bench_web.h"
-#include "c-actors/actor.h"
-#include "c-actors/letter.h"
-#include "c-actors/log.h"
+#include "../c-actors/actor.h"
+#include "../c-actors/letter.h"
+#include "../c-actors/log.h"
 #include <math.h>
 #include <semaphore.h>
 #include <stddef.h>
