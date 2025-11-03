@@ -40,22 +40,22 @@ target_compile_options(main PRIVATE
 target_include_directories(main PRIVATE src)
 target_link_libraries(main PRIVATE cactors m)
 
-# --- Tests (example) ---
+
 if (BUILD_TESTS)
   enable_testing()
-  # Add test executables explicitly
-  add_executable(message_test tests/message-test.c ${BENCH_FILES})
-  target_include_directories(message_test PRIVATE src)
-  target_link_libraries(message_test PRIVATE cactors criterion m)
-  add_test(NAME message-test COMMAND message_test)
 
-  add_executable(async_send_test tests/async-send-test.c ${BENCH_FILES})
-  target_include_directories(async_send_test PRIVATE src)
-  target_link_libraries(async_send_test PRIVATE cactors criterion m)
-  add_test(NAME async-send-test COMMAND async_send_test)
+  function(add_cactors_test_by_name name)
+    add_executable(${name} "${CMAKE_SOURCE_DIR}/tests/${name}.c" ${BENCH_FILES})
+    target_include_directories(${name} PRIVATE "${CMAKE_SOURCE_DIR}/src")
+    target_link_libraries(${name} PRIVATE cactors criterion m)
+    add_test(NAME ${name} COMMAND ${name})
+  endfunction()
 
-  add_executable(sync_send_test tests/sync-send-test.c ${BENCH_FILES})
-  target_include_directories(sync_send_test PRIVATE src)
-  target_link_libraries(sync_send_test PRIVATE cactors criterion m)
-  add_test(NAME sync-send-test COMMAND sync_send_test)
+  foreach(t
+      "message-test"
+      "async-send-test"
+      "sync-send-test"
+    )
+    add_cactors_test_by_name(${t})
+  endforeach()
 endif()

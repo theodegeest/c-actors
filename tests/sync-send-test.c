@@ -101,8 +101,9 @@ Test(sync_server_client, test1) {
 
   sem_wait(&done);
   sem_destroy(&done);
-  cr_expect(result == 42,
-            "The client did not get the right value from the server.");
+  int expected = 42;
+  cr_expect_eq(result, expected,
+               "The client did not get the right value from the server.\nGot %d instead of %d", result, expected);
 
   threadpool_stop(threadpool);
   threadpool_free(threadpool);
