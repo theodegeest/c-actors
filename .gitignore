@@ -1,3 +1,4 @@
+build/
 #--------------------------------------------------#
 # The following was generated with gitignore.nvim: #
 #--------------------------------------------------#
@@ -120,3 +121,11 @@ CMakeUserPresets.json
 *-prefix/
 
 main
+#--------------------------------------------------#
+# The following was generated with gitignore.nvim: #
+#--------------------------------------------------#
+# Gitignore for the following technologies: Ninja
+
+.ninja_deps
+.ninja_log
+
