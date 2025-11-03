@@ -2,11 +2,10 @@
 #include "c-actors/log.h"
 #include "c-actors/threadpool.h"
 
-#include "benchmarks/bench_chain.h"
-#include "benchmarks/bench_ping_pong.h"
-#include "benchmarks/bench_web.h"
+#include "benchmarks/benchmarks.h"
 
-int main(__attribute__((unused)) int argc, __attribute__((unused)) char *argv[]) {
+int main(__attribute__((unused)) int argc,
+         __attribute__((unused)) char *argv[]) {
   ActorUniverse *actor_universe = actor_universe_make();
   Threadpool *threadpool = threadpool_make(actor_universe, 4);
 
