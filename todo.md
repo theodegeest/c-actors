@@ -1,11 +1,11 @@
 # C-actor TODO
 
 - check is malloc succeeded!
-- make a list sorting benchmark that spawn children actors in nodes until a cutoff.
 - make a benchmark where actors spawns other actors.
+- add a tag when default is done.
 
 ## For when using speedup stack
-- use a cond variable to make sure that if a thread has not found work it just waits until work is added. (when sending the thread mst lock + signal that work has been added.)
+- use a cond variable (semaphore does this better) to make sure that if a thread has not found work it just waits until work is added. (when sending the thread mst lock + signal that work has been added.)
 - memory pool per message type so that you can use a static data size allocator that does not move data and keeps a freelist to reallocate.
 - make sure that non-active actors are not checked by all the threads.
 - look into this MPSC queue for mailboxes (https://github.com/grivet/mpsc-queue)
