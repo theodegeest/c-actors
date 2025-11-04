@@ -6,6 +6,7 @@
 #include "../src/c-actors/log.h"
 #include "../src/c-actors/message.h"
 #include "../src/c-actors/threadpool.h"
+#include "safe_alloc/safe_alloc.h"
 
 typedef enum { Get, GetReturn } ClientEnum;
 typedef enum { GetValue } ServerEnum;
@@ -28,13 +29,13 @@ typedef struct {
 } ServerMemory;
 
 static void *client_allocator(void *server) {
-  ClientMemory *memory = malloc(sizeof(ClientMemory));
+  ClientMemory *memory = safe_malloc(sizeof(ClientMemory));
   memory->server = server;
   return memory;
 }
 
 static void *server_allocator(void *value) {
-  ServerMemory *memory = malloc(sizeof(ServerMemory));
+  ServerMemory *memory = safe_malloc(sizeof(ServerMemory));
   memory->information = *(int *)value;
   return memory;
 }
@@ -53,7 +54,7 @@ void client_actor(Actor *self, Letter *letter) {
   switch (message->type) {
   case Get:
     // printf("Pong %d\n", message->i);
-    msg = malloc(sizeof(ServerMessage));
+    msg = safe_malloc(sizeof(ServerMessage));
     *msg = (ServerMessage){.type = GetValue};
     async_send(self, memory->server, message_make(msg, &free));
     break;
@@ -71,7 +72,7 @@ void server_actor(Actor *self, Letter *letter) {
   ClientMessage *msg;
   switch (message->type) {
   case GetValue:
-    msg = malloc(sizeof(ClientMessage));
+    msg = safe_malloc(sizeof(ClientMessage));
     *msg = (ClientMessage){.type = GetReturn, .ret = memory->information};
     async_send(self, letter->sender, message_make(msg, &free)); break;
   }
@@ -93,7 +94,7 @@ Test(async_server_client, test1) {
   Actor *client = actor_spawn(actor_universe, &client_actor, &client_allocator,
                               server, &client_deallocator);
 
-  ClientMessage *client_message = malloc(sizeof(ClientMessage));
+  ClientMessage *client_message = safe_malloc(sizeof(ClientMessage));
   *client_message = (ClientMessage){.type = Get};
 
   async_send(NULL, client, message_make(client_message, &free));

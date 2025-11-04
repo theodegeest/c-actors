@@ -1,4 +1,5 @@
 #include "actor_universe.h"
+#include "../safe_alloc/safe_alloc.h"
 #include "actor.h"
 #include "log.h"
 #include <stdio.h>
@@ -6,12 +7,12 @@
 #include <unistd.h>
 
 ActorUniverse *actor_universe_make() {
-  ActorUniverse *actor_universe = malloc(sizeof(ActorUniverse));
+  ActorUniverse *actor_universe = safe_malloc(sizeof(ActorUniverse));
 
   actor_universe->actor_queue =
-      calloc(ACTOR_QUEUE_INIT_CAPACITY, sizeof(Actor *));
+      safe_calloc(ACTOR_QUEUE_INIT_CAPACITY, sizeof(Actor *));
   actor_universe->actor_reservations =
-      calloc(ACTOR_QUEUE_INIT_CAPACITY, sizeof(char));
+      safe_calloc(ACTOR_QUEUE_INIT_CAPACITY, sizeof(char));
   actor_universe->actor_queue_max_capacity = ACTOR_QUEUE_INIT_CAPACITY;
   actor_universe->actor_queue_current_capacity = 0;
   actor_universe->actor_index = 0;
@@ -43,7 +44,8 @@ static void actor_universe_double_size(ActorUniverse *actor_universe) {
   actor_universe->actor_queue_max_capacity = actor_queue_new_capacity;
 }
 
-void actor_universe_add_actor(ActorUniverse *actor_universe, struct Actor *actor) {
+void actor_universe_add_actor(ActorUniverse *actor_universe,
+                              struct Actor *actor) {
   pthread_mutex_lock(&actor_universe->actor_queue_mutex);
   if (actor_universe->actor_queue_current_capacity >=
       actor_universe->actor_queue_max_capacity - 1) {
@@ -84,11 +86,11 @@ int actor_universe_get_available_actor(ActorUniverse *actor_universe) {
 }
 
 void actor_universe_reserve_actor(ActorUniverse *actor_universe,
-                                            int actor_index) {
+                                  int actor_index) {
   actor_universe->actor_reservations[actor_index] = 1;
 }
 
 void actor_universe_liberate_actor(ActorUniverse *actor_universe,
-                                             int actor_index) {
+                                   int actor_index) {
   actor_universe->actor_reservations[actor_index] = 0;
 }

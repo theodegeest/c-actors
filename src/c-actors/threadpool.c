@@ -1,4 +1,5 @@
 #include "threadpool.h"
+#include "../safe_alloc/safe_alloc.h"
 #include "actor.h"
 #include "log.h"
 #include <stdio.h>
@@ -21,8 +22,7 @@ void *threadpool_thread_function(void *void_args) {
 
     if (available_actor_index >= 0) {
       // There is an available actor, so reserve it
-      actor_universe_reserve_actor(args->actor_universe,
-                                             available_actor_index);
+      actor_universe_reserve_actor(args->actor_universe, available_actor_index);
       Actor *actor = args->actor_universe->actor_queue[available_actor_index];
       pthread_mutex_unlock(&args->actor_universe->actor_queue_mutex);
 
@@ -33,7 +33,7 @@ void *threadpool_thread_function(void *void_args) {
           available_actor_index);
       pthread_mutex_lock(&args->actor_universe->actor_queue_mutex);
       actor_universe_liberate_actor(args->actor_universe,
-                                              available_actor_index);
+                                    available_actor_index);
       pthread_mutex_unlock(&args->actor_universe->actor_queue_mutex);
     } else {
       // No available, so unlock and give a chance to another thread
@@ -46,13 +46,13 @@ void *threadpool_thread_function(void *void_args) {
 
 Threadpool *threadpool_make(ActorUniverse *actor_universe,
                             int number_of_threads) {
-  Threadpool *threadpool = malloc(sizeof(Threadpool));
-  threadpool->threads = calloc(number_of_threads, sizeof(pthread_t));
+  Threadpool *threadpool = safe_malloc(sizeof(Threadpool));
+  threadpool->threads = safe_calloc(number_of_threads, sizeof(pthread_t));
   threadpool->number_of_threads = number_of_threads;
 
   for (int thread_index = 0; thread_index < number_of_threads; thread_index++) {
 
-    ThreadpoolArgs *args = malloc(sizeof(ThreadpoolArgs));
+    ThreadpoolArgs *args = safe_malloc(sizeof(ThreadpoolArgs));
     args->thread_index = thread_index;
     args->actor_universe = actor_universe;
 

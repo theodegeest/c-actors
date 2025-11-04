@@ -1,6 +1,5 @@
 # C-actor TODO
 
-- check is malloc succeeded!
 - make a benchmark where actors spawns other actors.
 - add a tag when default is done.
 

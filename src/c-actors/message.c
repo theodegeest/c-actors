@@ -1,8 +1,9 @@
 #include "message.h"
+#include "../safe_alloc/safe_alloc.h"
 #include <stdlib.h>
 
 Message *message_make(void *payload, PayloadDeallocator payload_deallocator) {
-  Message *message = malloc(sizeof(Message));
+  Message *message = safe_malloc(sizeof(Message));
   *message =
       (Message){.payload = payload, .payload_deallocator = payload_deallocator};
   return message;

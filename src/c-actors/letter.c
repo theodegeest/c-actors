@@ -1,9 +1,10 @@
 #include "letter.h"
+#include "../safe_alloc/safe_alloc.h"
 #include <semaphore.h>
 #include <stdlib.h>
 
 Letter *letter_make(struct Actor *sender, Message *message, void *sync_return) {
-  Letter *letter = malloc(sizeof(Letter));
+  Letter *letter = safe_malloc(sizeof(Letter));
   letter->sender = sender;
   letter->message = message;
   if (sync_return != NULL) {

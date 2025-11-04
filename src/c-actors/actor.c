@@ -1,4 +1,5 @@
 #include "actor.h"
+#include "../safe_alloc/safe_alloc.h"
 #include "actor_universe.h"
 #include "letter.h"
 #include "log.h"
@@ -12,10 +13,10 @@
 Actor *actor_make(BehaviourFunction behaviour_function,
                   AllocatorFunction allocator_function, void *allocator_arg,
                   DeallocatorFunction deallocator_function) {
-  Actor *actor = malloc(sizeof(Actor));
+  Actor *actor = safe_malloc(sizeof(Actor));
   actor->behaviour_function = behaviour_function;
   actor->deallocator_function = deallocator_function;
-  actor->mailbox = calloc(MAILBOX_INIT_CAPACITY, sizeof(Letter *));
+  actor->mailbox = safe_calloc(MAILBOX_INIT_CAPACITY, sizeof(Letter *));
   actor->mailbox_current_capacity = 0;
   actor->mailbox_max_capacity = MAILBOX_INIT_CAPACITY;
   actor->mailbox_begin_index = 0;
@@ -88,7 +89,7 @@ void actor_process(Actor *actor) {
 static void actor_double_mailbox_size(Actor *actor) {
   LOG("Doubling the size of the mailbox of an actor\n");
   int actor_new_capacity = actor->mailbox_max_capacity * 2;
-  Letter **new_mailbox = calloc(actor_new_capacity, sizeof(Letter *));
+  Letter **new_mailbox = safe_calloc(actor_new_capacity, sizeof(Letter *));
   if (new_mailbox == NULL) {
     warning("while doubling the size of the mailbox of an actor the allocation "
             "failed!\n");
@@ -107,8 +108,7 @@ static void actor_double_mailbox_size(Actor *actor) {
   actor->mailbox_begin_index = 0;
 }
 
-static void put_letter_in_mailbox(Actor *receiver,
-                                  Letter *letter) {
+static void put_letter_in_mailbox(Actor *receiver, Letter *letter) {
   // lock on the mailbox of this actor to add a letter to it
   pthread_mutex_lock(&receiver->mailbox_mutex);
 
