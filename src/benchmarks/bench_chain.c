@@ -4,6 +4,7 @@
 #include "../c-actors/log.h"
 #include "../safe_alloc/safe_alloc.h"
 #include <semaphore.h>
+#include <stdatomic.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -58,7 +59,7 @@ void chain_end_actor(Actor *self, Letter *letter) {
   }
 }
 
-volatile float sink = 0;
+static _Atomic int sink = 0;
 
 void chain_actor(Actor *self, Letter *letter) {
   ChainMessage *message = letter->message->payload;
@@ -78,7 +79,7 @@ void chain_actor(Actor *self, Letter *letter) {
     for (int i = 0; i < message->i; i++) {
       local += (double)10000000 / (i + 1);
     }
-    sink += local;
+    atomic_fetch_add(&sink, local);
     async_send(self, chain_memory->next, message_make(msg, &free));
     break;
   }
@@ -124,6 +125,6 @@ void bench_chain(ActorUniverse *actor_universe, int dummy_count,
   // sleep(5);
 
   sem_wait(&done);
-  printf("sink: %f\n", sink);
+  printf("sink: %d\n", atomic_load(&sink));
   sem_destroy(&done);
 }

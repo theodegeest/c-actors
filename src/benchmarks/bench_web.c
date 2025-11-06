@@ -150,12 +150,6 @@ void web_actor(Actor *self, Letter *letter) {
 }
 
 void bench_web(ActorUniverse *actor_universe, int web_size, int rounds) {
-
-  // for (int r = 0; r < 11; r++) {
-  //   printf("web: %d, rounds: %d, res: %d\n", 4, r,
-  //          total_number_of_messages(4, r));
-  // }
-
   if (sem_init(&done, 0, 0) != 0) {
     perror("sem_init");
     return;
@@ -177,7 +171,6 @@ void bench_web(ActorUniverse *actor_universe, int web_size, int rounds) {
   }
 
   for (int web_index = 0; web_index < web_size; web_index++) {
-
     // Share the web actors with the leader
     WebMessage *share_ref_to_leader = safe_malloc(sizeof(WebMessage));
     *share_ref_to_leader =
