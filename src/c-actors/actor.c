@@ -4,6 +4,7 @@
 #include "letter.h"
 #include "log.h"
 #include <semaphore.h>
+#include <stdatomic.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -17,7 +18,7 @@ Actor *actor_make(BehaviourFunction behaviour_function,
   actor->behaviour_function = behaviour_function;
   actor->deallocator_function = deallocator_function;
   actor->mailbox = safe_calloc(MAILBOX_INIT_CAPACITY, sizeof(Letter *));
-  actor->mailbox_current_capacity = 0;
+  atomic_store(&actor->mailbox_current_capacity, 0);
   actor->mailbox_max_capacity = MAILBOX_INIT_CAPACITY;
   actor->mailbox_begin_index = 0;
   pthread_mutex_init(&actor->mailbox_mutex, NULL);
@@ -40,7 +41,7 @@ Actor *actor_spawn(ActorUniverse *actor_universe,
 void actor_free(Actor *actor) {
   // free all the letter that might still be in the mailbox.
 
-  for (int i = 0; i < actor->mailbox_current_capacity; i++) {
+  for (int i = 0; i < atomic_load(&actor->mailbox_current_capacity); i++) {
     letter_free(actor->mailbox[i]);
   }
 
@@ -61,7 +62,7 @@ static void actor_process_one_letter(Actor *actor) {
   if (letter_p == NULL) {
     warning("This is a null pointer\n");
   }
-  actor->mailbox_current_capacity--;
+  atomic_fetch_sub(&actor->mailbox_current_capacity, 1);
   actor->mailbox_begin_index =
       (actor->mailbox_begin_index + 1) % actor->mailbox_max_capacity;
 
@@ -79,7 +80,7 @@ static void actor_process_one_letter(Actor *actor) {
 
 void actor_process(Actor *actor) {
   for (int i = 0; i < PROCESSING_GRANULARITY; i++) {
-    if (actor->mailbox_current_capacity <= 0) {
+    if (atomic_load(&actor->mailbox_current_capacity) <= 0) {
       break;
     }
     actor_process_one_letter(actor);
@@ -112,19 +113,19 @@ static void put_letter_in_mailbox(Actor *receiver, Letter *letter) {
   // lock on the mailbox of this actor to add a letter to it
   pthread_mutex_lock(&receiver->mailbox_mutex);
 
-  if (receiver->mailbox_current_capacity >=
+  if (atomic_load(&receiver->mailbox_current_capacity) >=
       receiver->mailbox_max_capacity - 1) {
     actor_double_mailbox_size(receiver);
   }
 
-  int letter_index =
-      (receiver->mailbox_begin_index + receiver->mailbox_current_capacity) %
-      receiver->mailbox_max_capacity;
+  int letter_index = (receiver->mailbox_begin_index +
+                      atomic_load(&receiver->mailbox_current_capacity)) %
+                     receiver->mailbox_max_capacity;
   // LOG("put letter '%s' in a mailbox at index: %d\n", (char
   // *)message->payload,
   //     letter_index);
   receiver->mailbox[letter_index] = letter;
-  receiver->mailbox_current_capacity++;
+  atomic_fetch_add(&receiver->mailbox_current_capacity, 1);
 
   pthread_mutex_unlock(&receiver->mailbox_mutex);
 }

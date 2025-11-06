@@ -4,6 +4,7 @@
 #include "actor_universe.h"
 #include "letter.h"
 #include <pthread.h>
+#include <stdatomic.h>
 
 typedef void (*BehaviourFunction)(struct Actor *, Letter *);
 typedef void *(*AllocatorFunction)(void *);
@@ -12,7 +13,7 @@ typedef void (*DeallocatorFunction)(void *);
 #define MAILBOX_INIT_CAPACITY 10
 typedef struct Actor {
   Letter **mailbox;
-  volatile int mailbox_current_capacity;
+  _Atomic int mailbox_current_capacity;
   int mailbox_max_capacity;
   int mailbox_begin_index;
   pthread_mutex_t mailbox_mutex;

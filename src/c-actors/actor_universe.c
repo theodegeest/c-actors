@@ -72,8 +72,8 @@ int actor_universe_get_available_actor(ActorUniverse *actor_universe) {
     //        actor_universe->actor_queue[offset_actor_index]
     //            ->mailbox_current_capacity);
     if (!actor_universe->actor_reservations[offset_actor_index] &&
-        actor_universe->actor_queue[offset_actor_index]
-                ->mailbox_current_capacity > 0) {
+        atomic_load(&actor_universe->actor_queue[offset_actor_index]
+                         ->mailbox_current_capacity) > 0) {
       // This actor is not reserved and has mail, so it is available
       available_actor_index = offset_actor_index;
       actor_universe->actor_index =
