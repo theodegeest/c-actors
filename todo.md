@@ -1,5 +1,6 @@
 # C-actor TODO
 
+- make sure to use atimic functions!!!!!!!
 - make a benchmark where actors spawns other actors.
 - add a tag when default is done.
 
