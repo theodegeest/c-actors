@@ -53,7 +53,6 @@ void client_actor(Actor *self, Letter *letter) {
   ServerMessage *msg;
   switch (message->type) {
   case Get:
-    // printf("Pong %d\n", message->i);
     msg = safe_malloc(sizeof(ServerMessage));
     *msg = (ServerMessage){.type = GetValue};
     async_send(self, memory->server, message_make(msg, &free));
@@ -74,7 +73,8 @@ void server_actor(Actor *self, Letter *letter) {
   case GetValue:
     msg = safe_malloc(sizeof(ClientMessage));
     *msg = (ClientMessage){.type = GetReturn, .ret = memory->information};
-    async_send(self, letter->sender, message_make(msg, &free)); break;
+    async_send(self, letter->sender, message_make(msg, &free));
+    break;
   }
 }
 
@@ -103,7 +103,9 @@ Test(async_server_client, test1) {
   sem_destroy(&done);
   int expected = 42;
   cr_expect_eq(result, expected,
-               "The client did not get the right value from the server.\nGot %d instead of %d", result, expected);
+               "The client did not get the right value from the server.\nGot "
+               "%d instead of %d",
+               result, expected);
 
   threadpool_stop(threadpool);
   threadpool_free(threadpool);
