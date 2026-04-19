@@ -6,7 +6,7 @@ project(CActors VERSION 0.1 LANGUAGES C)
 option(BUILD_BENCHMARKS "Build benchmark targets" ON)
 option(BUILD_TESTS      "Build unit/test targets" ON)
 option(WARNINGS_AS_ERRORS "Treat warnings as errors" OFF)
-option(BUILD_WITH_ADDRESSSANITIZER "Build with memory checking" ON)
+option(BUILD_WITH_ADDRESSSANITIZER "Build with memory checking" OFF)
 
 set(CMAKE_C_STANDARD 11)
 set(CMAKE_C_STANDARD_REQUIRED ON)
