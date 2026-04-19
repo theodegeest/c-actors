@@ -40,8 +40,8 @@ int main(__attribute__((unused)) int argc,
   clock_gettime(CLOCK_MONOTONIC, &start);
 
   // bench_ping_pong(actor_universe, 5000000);
-  bench_chain(actor_universe, 0, 500, 5000);
-  // bench_web(actor_universe, 12, 5);
+  // bench_chain(actor_universe, 0, 500, 5000);
+  bench_web(actor_universe, 12, 5);
 
   clock_gettime(CLOCK_MONOTONIC, &end);
 
